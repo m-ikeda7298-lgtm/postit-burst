@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ポストイットバースト - 色認識テスト</title>
+  <title>ポストイットバースト</title>
 
   <style>
     html, body {
@@ -25,7 +25,16 @@
       background: #000;
     }
 
-    canvas {
+    #effectCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    #sampleCanvas {
       display: none;
     }
 
@@ -41,6 +50,19 @@
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.18);
       z-index: 5;
       pointer-events: none;
+    }
+
+    .guide {
+      position: fixed;
+      left: 50%;
+      top: calc(50% + 95px);
+      transform: translateX(-50%);
+      z-index: 6;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.5);
+      font-size: 14px;
+      white-space: nowrap;
     }
 
     .ui {
@@ -70,7 +92,7 @@
       border-radius: 999px;
       background: rgba(0,0,0,0.55);
       backdrop-filter: blur(8px);
-      min-width: 180px;
+      min-width: 210px;
     }
 
     .colorPreview {
@@ -82,25 +104,28 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.35);
     }
 
-    .guide {
+    .title {
       position: fixed;
-      left: 50%;
-      top: calc(50% + 95px);
-      transform: translateX(-50%);
-      z-index: 6;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.5);
-      font-size: 14px;
-      white-space: nowrap;
+      left: 16px;
+      top: 16px;
+      z-index: 10;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(8px);
+      font-weight: bold;
+      letter-spacing: 0.04em;
     }
   </style>
 </head>
 
 <body>
   <video id="video" autoplay playsinline muted></video>
-  <canvas id="sampleCanvas"></canvas>
 
+  <canvas id="sampleCanvas"></canvas>
+  <canvas id="effectCanvas"></canvas>
+
+  <div class="title">Post-it Burst</div>
   <div class="frame"></div>
   <div class="guide">白枠の中にポストイットを入れてください</div>
 
@@ -112,14 +137,38 @@
 
   <script>
     const video = document.getElementById("video");
+
     const sampleCanvas = document.getElementById("sampleCanvas");
     const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
+
+    const effectCanvas = document.getElementById("effectCanvas");
+    const effectCtx = effectCanvas.getContext("2d");
 
     const startButton = document.getElementById("startButton");
     const status = document.getElementById("status");
     const colorPreview = document.getElementById("colorPreview");
 
     let cameraStarted = false;
+    let particles = [];
+
+    let lastColorName = "不明";
+    let lastBurstTime = 0;
+
+    function resizeEffectCanvas() {
+      effectCanvas.width = window.innerWidth * window.devicePixelRatio;
+      effectCanvas.height = window.innerHeight * window.devicePixelRatio;
+      effectCtx.setTransform(
+        window.devicePixelRatio,
+        0,
+        0,
+        window.devicePixelRatio,
+        0,
+        0
+      );
+    }
+
+    window.addEventListener("resize", resizeEffectCanvas);
+    resizeEffectCanvas();
 
     startButton.addEventListener("click", async () => {
       try {
@@ -151,6 +200,7 @@
         detectCenterColor();
       }
 
+      updateParticles();
       requestAnimationFrame(loop);
     }
 
@@ -187,7 +237,6 @@
       let b = 0;
       let count = 0;
 
-      // 全ピクセルを読むと重くなるので、少し間引いて平均色を取る
       for (let i = 0; i < data.length; i += 16) {
         r += data[i];
         g += data[i + 1];
@@ -204,6 +253,23 @@
       colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
       status.textContent = `${result.name} / RGB(${r}, ${g}, ${b})`;
       status.style.background = result.displayColor;
+
+      maybeBurst(result);
+    }
+
+    function maybeBurst(result) {
+      const now = Date.now();
+
+      const isKnownColor = result.name !== "不明";
+      const colorChanged = result.name !== lastColorName;
+      const enoughTimePassed = now - lastBurstTime > 900;
+
+      if (isKnownColor && colorChanged && enoughTimePassed) {
+        createBurst(result.particleColor);
+        lastBurstTime = now;
+      }
+
+      lastColorName = result.name;
     }
 
     function classifyColor(r, g, b) {
@@ -212,59 +278,66 @@
       const s = hsv.s;
       const v = hsv.v;
 
-      // 暗すぎる、または色味が弱すぎる場合
       if (v < 0.25 || s < 0.18) {
         return {
           name: "不明",
-          displayColor: "rgba(0,0,0,0.55)"
+          displayColor: "rgba(0,0,0,0.55)",
+          particleColor: "rgb(255,255,255)"
         };
       }
 
       if (h >= 35 && h <= 70) {
         return {
           name: "黄色",
-          displayColor: "rgba(255, 220, 40, 0.85)"
+          displayColor: "rgba(255, 220, 40, 0.85)",
+          particleColor: "rgb(255, 230, 50)"
         };
       }
 
       if (h >= 15 && h < 35) {
         return {
           name: "オレンジ",
-          displayColor: "rgba(255, 140, 40, 0.85)"
+          displayColor: "rgba(255, 140, 40, 0.85)",
+          particleColor: "rgb(255, 145, 45)"
         };
       }
 
       if (h >= 330 || h < 15) {
         return {
           name: "ピンク / 赤",
-          displayColor: "rgba(255, 80, 150, 0.85)"
+          displayColor: "rgba(255, 80, 150, 0.85)",
+          particleColor: "rgb(255, 85, 160)"
         };
       }
 
       if (h >= 80 && h <= 160) {
         return {
           name: "緑",
-          displayColor: "rgba(80, 220, 110, 0.85)"
+          displayColor: "rgba(80, 220, 110, 0.85)",
+          particleColor: "rgb(80, 230, 120)"
         };
       }
 
       if (h >= 180 && h <= 250) {
         return {
           name: "青",
-          displayColor: "rgba(60, 170, 255, 0.85)"
+          displayColor: "rgba(60, 170, 255, 0.85)",
+          particleColor: "rgb(70, 180, 255)"
         };
       }
 
       if (h > 250 && h < 330) {
         return {
           name: "紫",
-          displayColor: "rgba(180, 100, 255, 0.85)"
+          displayColor: "rgba(180, 100, 255, 0.85)",
+          particleColor: "rgb(190, 110, 255)"
         };
       }
 
       return {
         name: "不明",
-        displayColor: "rgba(0,0,0,0.55)"
+        displayColor: "rgba(0,0,0,0.55)",
+        particleColor: "rgb(255,255,255)"
       };
     }
 
@@ -298,6 +371,59 @@
       }
 
       return { h, s, v };
+    }
+
+    function createBurst(color) {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      for (let i = 0; i < 90; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 9;
+        const size = 4 + Math.random() * 10;
+
+        particles.push({
+          x: centerX,
+          y: centerY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: size,
+          life: 1,
+          color: color
+        });
+      }
+    }
+
+    function updateParticles() {
+      effectCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const nextParticles = [];
+
+      for (const particle of particles) {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += 0.08;
+        particle.life -= 0.018;
+
+        if (particle.life > 0) {
+          nextParticles.push(particle);
+
+          effectCtx.globalAlpha = particle.life;
+          effectCtx.fillStyle = particle.color;
+          effectCtx.beginPath();
+          effectCtx.arc(
+            particle.x,
+            particle.y,
+            particle.size * particle.life,
+            0,
+            Math.PI * 2
+          );
+          effectCtx.fill();
+        }
+      }
+
+      effectCtx.globalAlpha = 1;
+      particles = nextParticles;
     }
   </script>
 </body>
