@@ -6,7 +6,8 @@
   <title>ポストイットバースト</title>
 
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       width: 100%;
       height: 100%;
@@ -47,7 +48,7 @@
       transform: translate(-50%, -50%);
       border: 3px solid white;
       border-radius: 18px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.18);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.18);
       z-index: 5;
       pointer-events: none;
     }
@@ -60,7 +61,7 @@
       z-index: 6;
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       font-size: 14px;
       white-space: nowrap;
     }
@@ -90,7 +91,7 @@
     .status {
       padding: 10px 14px;
       border-radius: 999px;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(8px);
       min-width: 210px;
     }
@@ -101,7 +102,8 @@
       border-radius: 50%;
       border: 3px solid white;
       background: #333;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      flex: 0 0 auto;
     }
 
     .title {
@@ -111,7 +113,7 @@
       z-index: 10;
       padding: 10px 14px;
       border-radius: 18px;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0, 0, 0, 0.45);
       backdrop-filter: blur(8px);
       font-weight: bold;
       letter-spacing: 0.04em;
@@ -139,267 +141,10 @@
     const video = document.getElementById("video");
 
     const sampleCanvas = document.getElementById("sampleCanvas");
-    const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
-
-    const effectCanvas = document.getElementById("effectCanvas");
-    const effectCtx = effectCanvas.getContext("2d");
-
-    const startButton = document.getElementById("startButton");
-    const status = document.getElementById("status");
-    const colorPreview = document.getElementById("colorPreview");
-
-    let cameraStarted = false;
-    let particles = [];
-
-    let lastColorName = "不明";
-    let lastBurstTime = 0;
-
-    function resizeEffectCanvas() {
-      effectCanvas.width = window.innerWidth * window.devicePixelRatio;
-      effectCanvas.height = window.innerHeight * window.devicePixelRatio;
-      effectCtx.setTransform(
-        window.devicePixelRatio,
-        0,
-        0,
-        window.devicePixelRatio,
-        0,
-        0
-      );
-    }
-
-    window.addEventListener("resize", resizeEffectCanvas);
-    resizeEffectCanvas();
-
-    startButton.addEventListener("click", async () => {
-      try {
-        status.textContent = "カメラ起動中...";
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: "environment"
-          },
-          audio: false
-        });
-
-        video.srcObject = stream;
-        cameraStarted = true;
-
-        status.textContent = "色認識中";
-        startButton.style.display = "none";
-
-        requestAnimationFrame(loop);
-
-      } catch (error) {
-        console.error(error);
-        status.textContent = "カメラを起動できませんでした";
-      }
+    const sampleCtx = sampleCanvas.getContext("2d", {
+      willReadFrequently: true
     });
 
-    function loop() {
-      if (cameraStarted) {
-        detectCenterColor();
-      }
-
-      updateParticles();
-      requestAnimationFrame(loop);
-    }
-
-    function detectCenterColor() {
-      if (!video.videoWidth || !video.videoHeight) {
-        return;
-      }
-
-      const sampleSize = 120;
-
-      sampleCanvas.width = sampleSize;
-      sampleCanvas.height = sampleSize;
-
-      const sourceX = video.videoWidth / 2 - sampleSize / 2;
-      const sourceY = video.videoHeight / 2 - sampleSize / 2;
-
-      sampleCtx.drawImage(
-        video,
-        sourceX,
-        sourceY,
-        sampleSize,
-        sampleSize,
-        0,
-        0,
-        sampleSize,
-        sampleSize
-      );
-
-      const imageData = sampleCtx.getImageData(0, 0, sampleSize, sampleSize);
-      const data = imageData.data;
-
-      let r = 0;
-      let g = 0;
-      let b = 0;
-      let count = 0;
-
-      for (let i = 0; i < data.length; i += 16) {
-        r += data[i];
-        g += data[i + 1];
-        b += data[i + 2];
-        count++;
-      }
-
-      r = Math.round(r / count);
-      g = Math.round(g / count);
-      b = Math.round(b / count);
-
-      const result = classifyColor(r, g, b);
-
-      colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
-      status.textContent = `${result.name} / RGB(${r}, ${g}, ${b})`;
-      status.style.background = result.displayColor;
-
-      maybeBurst(result);
-    }
-
-    <!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ポストイットバースト</title>
-
-  <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #111;
-      color: #fff;
-      font-family: sans-serif;
-    }
-
-    video {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      background: #000;
-    }
-
-    #effectCanvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 4;
-    }
-
-    #sampleCanvas {
-      display: none;
-    }
-
-    .frame {
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      width: 140px;
-      height: 140px;
-      transform: translate(-50%, -50%);
-      border: 3px solid white;
-      border-radius: 18px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.18);
-      z-index: 5;
-      pointer-events: none;
-    }
-
-    .guide {
-      position: fixed;
-      left: 50%;
-      top: calc(50% + 95px);
-      transform: translateX(-50%);
-      z-index: 6;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.5);
-      font-size: 14px;
-      white-space: nowrap;
-    }
-
-    .ui {
-      position: fixed;
-      left: 16px;
-      right: 16px;
-      bottom: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      z-index: 10;
-    }
-
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 12px 18px;
-      font-size: 16px;
-      font-weight: bold;
-      background: white;
-      color: #111;
-      cursor: pointer;
-    }
-
-    .status {
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(8px);
-      min-width: 210px;
-    }
-
-    .colorPreview {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 3px solid white;
-      background: #333;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.35);
-    }
-
-    .title {
-      position: fixed;
-      left: 16px;
-      top: 16px;
-      z-index: 10;
-      padding: 10px 14px;
-      border-radius: 18px;
-      background: rgba(0,0,0,0.45);
-      backdrop-filter: blur(8px);
-      font-weight: bold;
-      letter-spacing: 0.04em;
-    }
-  </style>
-</head>
-
-<body>
-  <video id="video" autoplay playsinline muted></video>
-
-  <canvas id="sampleCanvas"></canvas>
-  <canvas id="effectCanvas"></canvas>
-
-  <div class="title">Post-it Burst</div>
-  <div class="frame"></div>
-  <div class="guide">白枠の中にポストイットを入れてください</div>
-
-  <div class="ui">
-    <button id="startButton">カメラ開始</button>
-    <div class="colorPreview" id="colorPreview"></div>
-    <div class="status" id="status">待機中</div>
-  </div>
-
-  <script>
-    const video = document.getElementById("video");
-
-    const sampleCanvas = document.getElementById("sampleCanvas");
-    const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
-
     const effectCanvas = document.getElementById("effectCanvas");
     const effectCtx = effectCanvas.getContext("2d");
 
@@ -416,6 +161,7 @@
     function resizeEffectCanvas() {
       effectCanvas.width = window.innerWidth * window.devicePixelRatio;
       effectCanvas.height = window.innerHeight * window.devicePixelRatio;
+
       effectCtx.setTransform(
         window.devicePixelRatio,
         0,
@@ -447,7 +193,6 @@
         startButton.style.display = "none";
 
         requestAnimationFrame(loop);
-
       } catch (error) {
         console.error(error);
         status.textContent = "カメラを起動できませんでした";
@@ -524,7 +269,7 @@
       const enoughTimePassed = now - lastBurstTime > 900;
 
       if (isKnownColor && colorChanged && enoughTimePassed) {
-        createBurst(result.particleColor);
+        createBurst(result.particleColor, result.motionType);
         lastBurstTime = now;
       }
 
@@ -540,8 +285,9 @@
       if (v < 0.25 || s < 0.18) {
         return {
           name: "不明",
-          displayColor: "rgba(0,0,0,0.55)",
-          particleColor: "rgb(255,255,255)"
+          displayColor: "rgba(0, 0, 0, 0.55)",
+          particleColor: "rgb(255, 255, 255)",
+          motionType: "none"
         };
       }
 
@@ -549,7 +295,8 @@
         return {
           name: "黄色",
           displayColor: "rgba(255, 220, 40, 0.85)",
-          particleColor: "rgb(255, 230, 50)"
+          particleColor: "rgb(255, 230, 50)",
+          motionType: "sun"
         };
       }
 
@@ -557,7 +304,8 @@
         return {
           name: "オレンジ",
           displayColor: "rgba(255, 140, 40, 0.85)",
-          particleColor: "rgb(255, 145, 45)"
+          particleColor: "rgb(255, 145, 45)",
+          motionType: "firework"
         };
       }
 
@@ -565,7 +313,8 @@
         return {
           name: "ピンク / 赤",
           displayColor: "rgba(255, 80, 150, 0.85)",
-          particleColor: "rgb(255, 85, 160)"
+          particleColor: "rgb(255, 85, 160)",
+          motionType: "flower"
         };
       }
 
@@ -573,7 +322,8 @@
         return {
           name: "緑",
           displayColor: "rgba(80, 220, 110, 0.85)",
-          particleColor: "rgb(80, 230, 120)"
+          particleColor: "rgb(80, 230, 120)",
+          motionType: "leaf"
         };
       }
 
@@ -581,7 +331,8 @@
         return {
           name: "青",
           displayColor: "rgba(60, 170, 255, 0.85)",
-          particleColor: "rgb(70, 180, 255)"
+          particleColor: "rgb(70, 180, 255)",
+          motionType: "splash"
         };
       }
 
@@ -589,14 +340,16 @@
         return {
           name: "紫",
           displayColor: "rgba(180, 100, 255, 0.85)",
-          particleColor: "rgb(190, 110, 255)"
+          particleColor: "rgb(190, 110, 255)",
+          motionType: "spiral"
         };
       }
 
       return {
         name: "不明",
-        displayColor: "rgba(0,0,0,0.55)",
-        particleColor: "rgb(255,255,255)"
+        displayColor: "rgba(0, 0, 0, 0.55)",
+        particleColor: "rgb(255, 255, 255)",
+        motionType: "none"
       };
     }
 
@@ -632,24 +385,140 @@
       return { h, s, v };
     }
 
-    function createBurst(color) {
+    function createBurst(color, motionType) {
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
 
-      for (let i = 0; i < 90; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 9;
-        const size = 4 + Math.random() * 10;
+      if (motionType === "sun") {
+        for (let i = 0; i < 120; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 4 + Math.random() * 9;
 
-        particles.push({
-          x: centerX,
-          y: centerY,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          size: size,
-          life: 1,
-          color: color
-        });
+          particles.push({
+            x: centerX,
+            y: centerY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 3 + Math.random() * 8,
+            life: 1,
+            color: color,
+            shape: "circle",
+            gravity: 0.02,
+            drag: 0.985,
+            rotation: 0,
+            spin: 0
+          });
+        }
+      }
+
+      if (motionType === "firework") {
+        for (let i = 0; i < 150; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 5 + Math.random() * 13;
+
+          particles.push({
+            x: centerX,
+            y: centerY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 4 + Math.random() * 10,
+            life: 1,
+            color: color,
+            shape: "square",
+            gravity: 0.11,
+            drag: 0.975,
+            rotation: Math.random() * Math.PI,
+            spin: -0.15 + Math.random() * 0.3
+          });
+        }
+      }
+
+      if (motionType === "flower") {
+        for (let i = 0; i < 90; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 6;
+
+          particles.push({
+            x: centerX,
+            y: centerY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1.5,
+            size: 6 + Math.random() * 12,
+            life: 1,
+            color: color,
+            shape: "petal",
+            gravity: 0.035,
+            drag: 0.992,
+            rotation: Math.random() * Math.PI,
+            spin: -0.08 + Math.random() * 0.16
+          });
+        }
+      }
+
+      if (motionType === "leaf") {
+        for (let i = 0; i < 80; i++) {
+          const angle = -Math.PI / 2 + (-0.9 + Math.random() * 1.8);
+          const speed = 1.5 + Math.random() * 5;
+
+          particles.push({
+            x: centerX,
+            y: centerY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 7 + Math.random() * 12,
+            life: 1,
+            color: color,
+            shape: "leaf",
+            gravity: -0.005,
+            drag: 0.99,
+            rotation: Math.random() * Math.PI,
+            spin: -0.06 + Math.random() * 0.12
+          });
+        }
+      }
+
+      if (motionType === "splash") {
+        for (let i = 0; i < 100; i++) {
+          const angle = -Math.PI / 2 + (-0.9 + Math.random() * 1.8);
+          const speed = 4 + Math.random() * 10;
+
+          particles.push({
+            x: centerX,
+            y: centerY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 3 + Math.random() * 7,
+            life: 1,
+            color: color,
+            shape: "drop",
+            gravity: 0.16,
+            drag: 0.985,
+            rotation: Math.random() * Math.PI,
+            spin: 0.04
+          });
+        }
+      }
+
+      if (motionType === "spiral") {
+        for (let i = 0; i < 120; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 7;
+
+          particles.push({
+            x: centerX,
+            y: centerY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 4 + Math.random() * 10,
+            life: 1,
+            color: color,
+            shape: "circle",
+            gravity: 0.01,
+            drag: 0.99,
+            rotation: angle,
+            spin: 0.12
+          });
+        }
       }
     }
 
@@ -659,29 +528,68 @@
       const nextParticles = [];
 
       for (const particle of particles) {
+        particle.vx *= particle.drag;
+        particle.vy *= particle.drag;
+
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vy += 0.08;
-        particle.life -= 0.018;
+
+        particle.vy += particle.gravity;
+        particle.rotation += particle.spin;
+
+        particle.life -= 0.016;
 
         if (particle.life > 0) {
           nextParticles.push(particle);
 
-          effectCtx.globalAlpha = particle.life;
+          effectCtx.save();
+          effectCtx.globalAlpha = Math.max(particle.life, 0);
           effectCtx.fillStyle = particle.color;
-          effectCtx.beginPath();
-          effectCtx.arc(
-            particle.x,
-            particle.y,
-            particle.size * particle.life,
-            0,
-            Math.PI * 2
-          );
-          effectCtx.fill();
+          effectCtx.translate(particle.x, particle.y);
+          effectCtx.rotate(particle.rotation);
+
+          const size = particle.size * particle.life;
+
+          if (particle.shape === "circle") {
+            effectCtx.beginPath();
+            effectCtx.arc(0, 0, size, 0, Math.PI * 2);
+            effectCtx.fill();
+          }
+
+          if (particle.shape === "square") {
+            effectCtx.fillRect(-size / 2, -size / 2, size, size);
+          }
+
+          if (particle.shape === "petal") {
+            effectCtx.beginPath();
+            effectCtx.ellipse(0, 0, size * 0.65, size * 1.25, 0, 0, Math.PI * 2);
+            effectCtx.fill();
+          }
+
+          if (particle.shape === "leaf") {
+            effectCtx.beginPath();
+            effectCtx.ellipse(0, 0, size * 0.55, size * 1.45, 0, 0, Math.PI * 2);
+            effectCtx.fill();
+
+            effectCtx.globalAlpha = Math.max(particle.life * 0.45, 0);
+            effectCtx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+            effectCtx.lineWidth = 1;
+            effectCtx.beginPath();
+            effectCtx.moveTo(0, -size * 1.1);
+            effectCtx.lineTo(0, size * 1.1);
+            effectCtx.stroke();
+          }
+
+          if (particle.shape === "drop") {
+            effectCtx.beginPath();
+            effectCtx.ellipse(0, 0, size * 0.65, size * 1.2, 0, 0, Math.PI * 2);
+            effectCtx.fill();
+          }
+
+          effectCtx.restore();
         }
       }
 
-      effectCtx.globalAlpha = 1;
       particles = nextParticles;
     }
   </script>
