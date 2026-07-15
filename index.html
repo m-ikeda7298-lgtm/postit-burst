@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ポストイットバースト</title>
+  <title>ポストイットバースト - 色認識テスト</title>
 
   <style>
     html, body {
@@ -23,6 +23,24 @@
       height: 100%;
       object-fit: cover;
       background: #000;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .frame {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 140px;
+      height: 140px;
+      transform: translate(-50%, -50%);
+      border: 3px solid white;
+      border-radius: 18px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.18);
+      z-index: 5;
+      pointer-events: none;
     }
 
     .ui {
@@ -52,38 +70,56 @@
       border-radius: 999px;
       background: rgba(0,0,0,0.55);
       backdrop-filter: blur(8px);
+      min-width: 180px;
     }
 
-    .frame {
+    .colorPreview {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid white;
+      background: #333;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    }
+
+    .guide {
       position: fixed;
       left: 50%;
-      top: 50%;
-      width: 140px;
-      height: 140px;
-      transform: translate(-50%, -50%);
-      border: 3px solid white;
-      border-radius: 18px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.18);
-      z-index: 5;
-      pointer-events: none;
+      top: calc(50% + 95px);
+      transform: translateX(-50%);
+      z-index: 6;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.5);
+      font-size: 14px;
+      white-space: nowrap;
     }
   </style>
 </head>
 
 <body>
   <video id="video" autoplay playsinline muted></video>
+  <canvas id="sampleCanvas"></canvas>
 
   <div class="frame"></div>
+  <div class="guide">白枠の中にポストイットを入れてください</div>
 
   <div class="ui">
     <button id="startButton">カメラ開始</button>
+    <div class="colorPreview" id="colorPreview"></div>
     <div class="status" id="status">待機中</div>
   </div>
 
   <script>
     const video = document.getElementById("video");
+    const sampleCanvas = document.getElementById("sampleCanvas");
+    const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
+
     const startButton = document.getElementById("startButton");
     const status = document.getElementById("status");
+    const colorPreview = document.getElementById("colorPreview");
+
+    let cameraStarted = false;
 
     startButton.addEventListener("click", async () => {
       try {
@@ -97,14 +133,172 @@
         });
 
         video.srcObject = stream;
-        status.textContent = "カメラ起動成功";
+        cameraStarted = true;
+
+        status.textContent = "色認識中";
         startButton.style.display = "none";
+
+        requestAnimationFrame(loop);
 
       } catch (error) {
         console.error(error);
         status.textContent = "カメラを起動できませんでした";
       }
     });
+
+    function loop() {
+      if (cameraStarted) {
+        detectCenterColor();
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function detectCenterColor() {
+      if (!video.videoWidth || !video.videoHeight) {
+        return;
+      }
+
+      const sampleSize = 120;
+
+      sampleCanvas.width = sampleSize;
+      sampleCanvas.height = sampleSize;
+
+      const sourceX = video.videoWidth / 2 - sampleSize / 2;
+      const sourceY = video.videoHeight / 2 - sampleSize / 2;
+
+      sampleCtx.drawImage(
+        video,
+        sourceX,
+        sourceY,
+        sampleSize,
+        sampleSize,
+        0,
+        0,
+        sampleSize,
+        sampleSize
+      );
+
+      const imageData = sampleCtx.getImageData(0, 0, sampleSize, sampleSize);
+      const data = imageData.data;
+
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let count = 0;
+
+      // 全ピクセルを読むと重くなるので、少し間引いて平均色を取る
+      for (let i = 0; i < data.length; i += 16) {
+        r += data[i];
+        g += data[i + 1];
+        b += data[i + 2];
+        count++;
+      }
+
+      r = Math.round(r / count);
+      g = Math.round(g / count);
+      b = Math.round(b / count);
+
+      const result = classifyColor(r, g, b);
+
+      colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
+      status.textContent = `${result.name} / RGB(${r}, ${g}, ${b})`;
+      status.style.background = result.displayColor;
+    }
+
+    function classifyColor(r, g, b) {
+      const hsv = rgbToHsv(r, g, b);
+      const h = hsv.h;
+      const s = hsv.s;
+      const v = hsv.v;
+
+      // 暗すぎる、または色味が弱すぎる場合
+      if (v < 0.25 || s < 0.18) {
+        return {
+          name: "不明",
+          displayColor: "rgba(0,0,0,0.55)"
+        };
+      }
+
+      if (h >= 35 && h <= 70) {
+        return {
+          name: "黄色",
+          displayColor: "rgba(255, 220, 40, 0.85)"
+        };
+      }
+
+      if (h >= 15 && h < 35) {
+        return {
+          name: "オレンジ",
+          displayColor: "rgba(255, 140, 40, 0.85)"
+        };
+      }
+
+      if (h >= 330 || h < 15) {
+        return {
+          name: "ピンク / 赤",
+          displayColor: "rgba(255, 80, 150, 0.85)"
+        };
+      }
+
+      if (h >= 80 && h <= 160) {
+        return {
+          name: "緑",
+          displayColor: "rgba(80, 220, 110, 0.85)"
+        };
+      }
+
+      if (h >= 180 && h <= 250) {
+        return {
+          name: "青",
+          displayColor: "rgba(60, 170, 255, 0.85)"
+        };
+      }
+
+      if (h > 250 && h < 330) {
+        return {
+          name: "紫",
+          displayColor: "rgba(180, 100, 255, 0.85)"
+        };
+      }
+
+      return {
+        name: "不明",
+        displayColor: "rgba(0,0,0,0.55)"
+      };
+    }
+
+    function rgbToHsv(r, g, b) {
+      r = r / 255;
+      g = g / 255;
+      b = b / 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const diff = max - min;
+
+      let h = 0;
+      const s = max === 0 ? 0 : diff / max;
+      const v = max;
+
+      if (diff !== 0) {
+        if (max === r) {
+          h = ((g - b) / diff) % 6;
+        } else if (max === g) {
+          h = (b - r) / diff + 2;
+        } else {
+          h = (r - g) / diff + 4;
+        }
+
+        h = h * 60;
+
+        if (h < 0) {
+          h += 360;
+        }
+      }
+
+      return { h, s, v };
+    }
   </script>
 </body>
 </html>
