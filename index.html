@@ -242,10 +242,10 @@
   <div class="title">Post-it Burst</div>
 
   <div class="frames">
-    <div class="frame"><div class="frameLabel">1</div></div>
-    <div class="frame"><div class="frameLabel">2</div></div>
-    <div class="frame"><div class="frameLabel">3</div></div>
-    <div class="frame"><div class="frameLabel">4</div></div>
+    <div class="frame" id="frame1"><div class="frameLabel">1</div></div>
+    <div class="frame" id="frame2"><div class="frameLabel">2</div></div>
+    <div class="frame" id="frame3"><div class="frameLabel">3</div></div>
+    <div class="frame" id="frame4"><div class="frameLabel">4</div></div>
   </div>
 
   <div class="guide">4つの白枠に付箋を並べてください</div>
@@ -255,7 +255,7 @@
       <h1>Post-it Burst</h1>
       <p>
         4つの付箋の色をカメラで読み取り、<br />
-        それぞれの色が別々にはじけます。<br />
+        それぞれの白枠の中央から色がはじけます。<br />
         ボタン、またはこの画面をタップしてください。
       </p>
       <button id="startButton" type="button">カメラ開始</button>
@@ -287,59 +287,42 @@
     const startOverlay = document.getElementById("startOverlay");
     const status = document.getElementById("status");
 
-    const colorPreview1 = document.getElementById("colorPreview1");
-    const colorPreview2 = document.getElementById("colorPreview2");
-    const colorPreview3 = document.getElementById("colorPreview3");
-    const colorPreview4 = document.getElementById("colorPreview4");
+    const zones = [
+      {
+        label: "1",
+        frame: document.getElementById("frame1"),
+        preview: document.getElementById("colorPreview1"),
+        lastColorName: "不明",
+        lastBurstTime: 0
+      },
+      {
+        label: "2",
+        frame: document.getElementById("frame2"),
+        preview: document.getElementById("colorPreview2"),
+        lastColorName: "不明",
+        lastBurstTime: 0
+      },
+      {
+        label: "3",
+        frame: document.getElementById("frame3"),
+        preview: document.getElementById("colorPreview3"),
+        lastColorName: "不明",
+        lastBurstTime: 0
+      },
+      {
+        label: "4",
+        frame: document.getElementById("frame4"),
+        preview: document.getElementById("colorPreview4"),
+        lastColorName: "不明",
+        lastBurstTime: 0
+      }
+    ];
 
     let cameraStarted = false;
     let loopStarted = false;
     let particles = [];
 
     const BURST_INTERVAL_MS = 3000;
-
-    const zones = [
-      {
-        id: "zone1",
-        label: "1",
-        screenXRatio: 0.32,
-        videoXRatio: 0.32,
-        videoYRatio: 0.5,
-        preview: colorPreview1,
-        lastColorName: "不明",
-        lastBurstTime: 0
-      },
-      {
-        id: "zone2",
-        label: "2",
-        screenXRatio: 0.44,
-        videoXRatio: 0.44,
-        videoYRatio: 0.5,
-        preview: colorPreview2,
-        lastColorName: "不明",
-        lastBurstTime: 0
-      },
-      {
-        id: "zone3",
-        label: "3",
-        screenXRatio: 0.56,
-        videoXRatio: 0.56,
-        videoYRatio: 0.5,
-        preview: colorPreview3,
-        lastColorName: "不明",
-        lastBurstTime: 0
-      },
-      {
-        id: "zone4",
-        label: "4",
-        screenXRatio: 0.68,
-        videoXRatio: 0.68,
-        videoYRatio: 0.5,
-        preview: colorPreview4,
-        lastColorName: "不明",
-        lastBurstTime: 0
-      }
-    ];
 
     function resizeEffectCanvas() {
       effectCanvas.width = window.innerWidth * window.devicePixelRatio;
@@ -428,44 +411,100 @@
 
       for (const zone of zones) {
         const detection = detectZoneColor(zone);
-        maybeBurst(zone, detection.result);
+        maybeBurst(zone, detection.result, detection.screenCenter);
 
         zone.preview.style.background = `rgb(${detection.r}, ${detection.g}, ${detection.b})`;
 
-        results.push(
-          `${zone.label}: ${detection.result.name}`
-        );
+        results.push(`${zone.label}: ${detection.result.name}`);
       }
 
       status.textContent = results.join("　");
       status.style.background = "rgba(0, 0, 0, 0.55)";
     }
 
+    function getFrameScreenCenter(frameElement) {
+      const rect = frameElement.getBoundingClientRect();
+
+      return {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    function getVideoMapping() {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+
+      const scale = Math.max(
+        viewportWidth / videoWidth,
+        viewportHeight / videoHeight
+      );
+
+      const displayedVideoWidth = videoWidth * scale;
+      const displayedVideoHeight = videoHeight * scale;
+
+      const offsetX = (viewportWidth - displayedVideoWidth) / 2;
+      const offsetY = (viewportHeight - displayedVideoHeight) / 2;
+
+      return {
+        scale,
+        offsetX,
+        offsetY,
+        videoWidth,
+        videoHeight
+      };
+    }
+
+    function screenPointToVideoPoint(screenX, screenY) {
+      const mapping = getVideoMapping();
+
+      let videoX = (screenX - mapping.offsetX) / mapping.scale;
+      let videoY = (screenY - mapping.offsetY) / mapping.scale;
+
+      videoX = Math.max(0, Math.min(mapping.videoWidth, videoX));
+      videoY = Math.max(0, Math.min(mapping.videoHeight, videoY));
+
+      return {
+        x: videoX,
+        y: videoY,
+        scale: mapping.scale
+      };
+    }
+
     function detectZoneColor(zone) {
-      const sampleSize = getSampleSize();
+      const screenCenter = getFrameScreenCenter(zone.frame);
+      const videoPoint = screenPointToVideoPoint(screenCenter.x, screenCenter.y);
 
-      sampleCanvas.width = sampleSize;
-      sampleCanvas.height = sampleSize;
+      const screenSampleSize = Math.min(screenCenter.width, screenCenter.height) * 0.72;
+      const videoSampleSize = Math.max(
+        32,
+        Math.round(screenSampleSize / videoPoint.scale)
+      );
 
-      const centerX = video.videoWidth * zone.videoXRatio;
-      const centerY = video.videoHeight * zone.videoYRatio;
+      sampleCanvas.width = videoSampleSize;
+      sampleCanvas.height = videoSampleSize;
 
-      const sourceX = centerX - sampleSize / 2;
-      const sourceY = centerY - sampleSize / 2;
+      const sourceX = videoPoint.x - videoSampleSize / 2;
+      const sourceY = videoPoint.y - videoSampleSize / 2;
 
       sampleCtx.drawImage(
         video,
         sourceX,
         sourceY,
-        sampleSize,
-        sampleSize,
+        videoSampleSize,
+        videoSampleSize,
         0,
         0,
-        sampleSize,
-        sampleSize
+        videoSampleSize,
+        videoSampleSize
       );
 
-      const imageData = sampleCtx.getImageData(0, 0, sampleSize, sampleSize);
+      const imageData = sampleCtx.getImageData(0, 0, videoSampleSize, videoSampleSize);
       const data = imageData.data;
 
       let r = 0;
@@ -488,23 +527,12 @@
         r,
         g,
         b,
+        screenCenter,
         result: classifyColor(r, g, b)
       };
     }
 
-    function getSampleSize() {
-      if (window.innerWidth < 480) {
-        return 72;
-      }
-
-      if (window.innerWidth < 760) {
-        return 88;
-      }
-
-      return 100;
-    }
-
-    function maybeBurst(zone, result) {
+    function maybeBurst(zone, result, screenCenter) {
       const now = Date.now();
 
       if (result.name === "不明") {
@@ -516,10 +544,13 @@
       const intervalPassed = now - zone.lastBurstTime >= BURST_INTERVAL_MS;
 
       if (colorChanged || intervalPassed) {
-        const burstX = window.innerWidth * zone.screenXRatio;
-        const burstY = window.innerHeight * 0.5;
+        createBurst(
+          result.particleColor,
+          result.motionType,
+          screenCenter.x,
+          screenCenter.y
+        );
 
-        createBurst(result.particleColor, result.motionType, burstX, burstY);
         zone.lastBurstTime = now;
       }
 
