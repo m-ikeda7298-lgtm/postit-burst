@@ -58,16 +58,35 @@
 
     .frame {
       position: fixed;
-      left: 50%;
       top: 50%;
-      width: 140px;
-      height: 140px;
+      width: 125px;
+      height: 125px;
       transform: translate(-50%, -50%);
       border: 3px solid white;
       border-radius: 18px;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.08);
       z-index: 6;
       pointer-events: none;
+    }
+
+    .frame.left {
+      left: 38%;
+    }
+
+    .frame.right {
+      left: 62%;
+    }
+
+    .frameLabel {
+      position: absolute;
+      left: 50%;
+      top: -34px;
+      transform: translateX(-50%);
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      font-size: 13px;
+      white-space: nowrap;
     }
 
     .guide {
@@ -89,11 +108,28 @@
       left: 16px;
       right: 16px;
       bottom: 16px;
-      display: flex;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px 12px;
       align-items: center;
       z-index: 50;
       pointer-events: none;
+    }
+
+    .previewWrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .colorPreview {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 3px solid white;
+      background: #333;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      flex: 0 0 auto;
     }
 
     .status {
@@ -101,18 +137,8 @@
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(8px);
-      min-width: 230px;
       font-size: 14px;
-    }
-
-    .colorPreview {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 3px solid white;
-      background: #333;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-      flex: 0 0 auto;
+      line-height: 1.45;
     }
 
     .startOverlay {
@@ -127,7 +153,7 @@
     }
 
     .startPanel {
-      width: min(88vw, 420px);
+      width: min(88vw, 430px);
       padding: 28px 22px;
       border-radius: 28px;
       background: rgba(255, 255, 255, 0.13);
@@ -187,15 +213,23 @@
   <canvas id="effectCanvas"></canvas>
 
   <div class="title">Post-it Burst</div>
-  <div class="frame"></div>
-  <div class="guide">白枠の中にポストイットを入れてください</div>
+
+  <div class="frame left">
+    <div class="frameLabel">左の付箋</div>
+  </div>
+
+  <div class="frame right">
+    <div class="frameLabel">右の付箋</div>
+  </div>
+
+  <div class="guide">2つの白枠に付箋を入れてください</div>
 
   <div class="startOverlay" id="startOverlay">
     <div class="startPanel">
       <h1>Post-it Burst</h1>
       <p>
-        ポストイットの色をカメラで読み取り、<br />
-        色ごとに違う動きではじけます。<br />
+        2つの付箋の色をカメラで読み取り、<br />
+        それぞれの色が別々にはじけます。<br />
         ボタン、またはこの画面をタップしてください。
       </p>
       <button id="startButton" type="button">カメラ開始</button>
@@ -203,7 +237,10 @@
   </div>
 
   <div class="ui">
-    <div class="colorPreview" id="colorPreview"></div>
+    <div class="previewWrap">
+      <div class="colorPreview" id="leftColorPreview"></div>
+      <div class="colorPreview" id="rightColorPreview"></div>
+    </div>
     <div class="status" id="status">待機中</div>
   </div>
 
@@ -221,16 +258,37 @@
     const startButton = document.getElementById("startButton");
     const startOverlay = document.getElementById("startOverlay");
     const status = document.getElementById("status");
-    const colorPreview = document.getElementById("colorPreview");
+    const leftColorPreview = document.getElementById("leftColorPreview");
+    const rightColorPreview = document.getElementById("rightColorPreview");
 
     let cameraStarted = false;
     let loopStarted = false;
     let particles = [];
 
-    let lastColorName = "不明";
-    let lastBurstTime = 0;
-
     const BURST_INTERVAL_MS = 3000;
+
+    const zones = [
+      {
+        id: "left",
+        label: "左",
+        screenXRatio: 0.38,
+        videoXRatio: 0.38,
+        videoYRatio: 0.5,
+        preview: leftColorPreview,
+        lastColorName: "不明",
+        lastBurstTime: 0
+      },
+      {
+        id: "right",
+        label: "右",
+        screenXRatio: 0.62,
+        videoXRatio: 0.62,
+        videoYRatio: 0.5,
+        preview: rightColorPreview,
+        lastColorName: "不明",
+        lastBurstTime: 0
+      }
+    ];
 
     function resizeEffectCanvas() {
       effectCanvas.width = window.innerWidth * window.devicePixelRatio;
@@ -303,25 +361,46 @@
 
     function loop() {
       if (cameraStarted) {
-        detectCenterColor();
+        detectAllZones();
       }
 
       updateParticles();
       requestAnimationFrame(loop);
     }
 
-    function detectCenterColor() {
+    function detectAllZones() {
       if (!video.videoWidth || !video.videoHeight) {
         return;
       }
 
-      const sampleSize = 120;
+      const results = [];
+
+      for (const zone of zones) {
+        const detection = detectZoneColor(zone);
+        maybeBurst(zone, detection.result);
+
+        zone.preview.style.background = `rgb(${detection.r}, ${detection.g}, ${detection.b})`;
+
+        results.push(
+          `${zone.label}: ${detection.result.name} / RGB(${detection.r}, ${detection.g}, ${detection.b})`
+        );
+      }
+
+      status.textContent = results.join("　");
+      status.style.background = getStatusBackground();
+    }
+
+    function detectZoneColor(zone) {
+      const sampleSize = 105;
 
       sampleCanvas.width = sampleSize;
       sampleCanvas.height = sampleSize;
 
-      const sourceX = video.videoWidth / 2 - sampleSize / 2;
-      const sourceY = video.videoHeight / 2 - sampleSize / 2;
+      const centerX = video.videoWidth * zone.videoXRatio;
+      const centerY = video.videoHeight * zone.videoYRatio;
+
+      const sourceX = centerX - sampleSize / 2;
+      const sourceY = centerY - sampleSize / 2;
 
       sampleCtx.drawImage(
         video,
@@ -354,32 +433,46 @@
       g = Math.round(g / count);
       b = Math.round(b / count);
 
-      const result = classifyColor(r, g, b);
-
-      maybeBurst(result);
-
-      colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
-      status.style.background = result.displayColor;
-      status.textContent = `${result.name} / RGB(${r}, ${g}, ${b})`;
+      return {
+        r,
+        g,
+        b,
+        result: classifyColor(r, g, b)
+      };
     }
 
-    function maybeBurst(result) {
+    function maybeBurst(zone, result) {
       const now = Date.now();
 
       if (result.name === "不明") {
-        lastColorName = "不明";
+        zone.lastColorName = "不明";
         return;
       }
 
-      const colorChanged = result.name !== lastColorName;
-      const intervalPassed = now - lastBurstTime >= BURST_INTERVAL_MS;
+      const colorChanged = result.name !== zone.lastColorName;
+      const intervalPassed = now - zone.lastBurstTime >= BURST_INTERVAL_MS;
 
       if (colorChanged || intervalPassed) {
-        createBurst(result.particleColor, result.motionType);
-        lastBurstTime = now;
+        const burstX = window.innerWidth * zone.screenXRatio;
+        const burstY = window.innerHeight * 0.5;
+
+        createBurst(result.particleColor, result.motionType, burstX, burstY);
+        zone.lastBurstTime = now;
       }
 
-      lastColorName = result.name;
+      zone.lastColorName = result.name;
+    }
+
+    function getStatusBackground() {
+      const knownZones = zones.filter(function(zone) {
+        return zone.lastColorName !== "不明";
+      });
+
+      if (knownZones.length === 0) {
+        return "rgba(0, 0, 0, 0.55)";
+      }
+
+      return "rgba(0, 0, 0, 0.55)";
     }
 
     function classifyColor(r, g, b) {
@@ -491,9 +584,9 @@
       return { h, s, v };
     }
 
-    function createBurst(color, motionType) {
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
+    function createBurst(color, motionType, originX, originY) {
+      const centerX = originX;
+      const centerY = originY;
 
       if (motionType === "sun") {
         for (let i = 0; i < 120; i++) {
