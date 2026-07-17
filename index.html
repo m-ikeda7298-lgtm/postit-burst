@@ -93,62 +93,7 @@
       gap: 12px;
       align-items: center;
       z-index: 50;
-      pointer-events: auto;
-    }
-
-    .startOverlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: grid;
-      place-items: center;
-      background: rgba(0, 0, 0, 0.52);
-      backdrop-filter: blur(8px);
-      pointer-events: auto;
-    }
-
-    .startPanel {
-      width: min(88vw, 420px);
-      padding: 28px 22px;
-      border-radius: 28px;
-      background: rgba(255, 255, 255, 0.12);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-    }
-
-    .startPanel h1 {
-      margin: 0 0 10px;
-      font-size: 28px;
-    }
-
-    .startPanel p {
-      margin: 0 0 22px;
-      color: rgba(255, 255, 255, 0.82);
-      line-height: 1.6;
-      font-size: 15px;
-    }
-
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 14px 22px;
-      font-size: 17px;
-      font-weight: bold;
-      background: white;
-      color: #111;
-      cursor: pointer;
-      pointer-events: auto;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    button:active {
-      transform: scale(0.97);
-    }
-
-    #startButton {
-      min-width: 170px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
     }
 
     .status {
@@ -170,8 +115,67 @@
       flex: 0 0 auto;
     }
 
+    .startOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.58);
+      backdrop-filter: blur(8px);
+      pointer-events: auto;
+    }
+
+    .startPanel {
+      width: min(88vw, 420px);
+      padding: 28px 22px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.13);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      pointer-events: auto;
+    }
+
+    .startPanel h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+
+    .startPanel p {
+      margin: 0 0 22px;
+      color: rgba(255, 255, 255, 0.84);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    #startButton {
+      position: relative;
+      z-index: 10000;
+      border: none;
+      border-radius: 999px;
+      padding: 16px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #ffffff;
+      color: #111;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      min-width: 180px;
+    }
+
+    #startButton:active {
+      transform: scale(0.97);
+    }
+
+    #startButton:disabled {
+      opacity: 0.7;
+    }
+
     .hidden {
-      display: none;
+      display: none !important;
     }
   </style>
 </head>
@@ -191,9 +195,10 @@
       <h1>Post-it Burst</h1>
       <p>
         ポストイットの色をカメラで読み取り、<br />
-        色ごとに違う動きではじけます。
+        色ごとに違う動きではじけます。<br />
+        ボタン、またはこの画面をタップしてください。
       </p>
-      <button id="startButton">カメラ開始</button>
+      <button id="startButton" type="button">カメラ開始</button>
     </div>
   </div>
 
@@ -281,9 +286,17 @@
       }
     }
 
-    startButton.addEventListener("click", startCamera);
+    startButton.addEventListener("click", function(event) {
+      event.preventDefault();
+      startCamera();
+    });
 
-    startButton.addEventListener("touchend", function(event) {
+    startButton.addEventListener("pointerup", function(event) {
+      event.preventDefault();
+      startCamera();
+    });
+
+    startOverlay.addEventListener("pointerup", function(event) {
       event.preventDefault();
       startCamera();
     });
@@ -343,10 +356,9 @@
 
       const result = classifyColor(r, g, b);
 
-      colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
-
       maybeBurst(result);
 
+      colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
       status.style.background = result.displayColor;
       status.textContent = `${result.name} / RGB(${r}, ${g}, ${b})`;
     }
@@ -354,9 +366,7 @@
     function maybeBurst(result) {
       const now = Date.now();
 
-      const isKnownColor = result.name !== "不明";
-
-      if (!isKnownColor) {
+      if (result.name === "不明") {
         lastColorName = "不明";
         return;
       }
@@ -364,18 +374,9 @@
       const colorChanged = result.name !== lastColorName;
       const intervalPassed = now - lastBurstTime >= BURST_INTERVAL_MS;
 
-      if (colorChanged) {
+      if (colorChanged || intervalPassed) {
         createBurst(result.particleColor, result.motionType);
         lastBurstTime = now;
-        lastColorName = result.name;
-        return;
-      }
-
-      if (intervalPassed) {
-        createBurst(result.particleColor, result.motionType);
-        lastBurstTime = now;
-        lastColorName = result.name;
-        return;
       }
 
       lastColorName = result.name;
@@ -634,41 +635,43 @@
 
       for (const particle of particles) {
         particle.vx *= particle.drag;
-        particle.*y *= particle.drag;
+        particle.vy *= particle.drag;
 
-        parti*le.x += particle.vx;
-        parti*le.y += particle.vy;
+        particle.x += particle.vx;
+        particle.y += particle.vy;
 
-        part*cle.vy += particle.gravity;
-      * particle.rotation += particle.spi*;
+        particle.vy += particle.gravity;
+        particle.rotation += particle.spin;
 
-        particle.life -= 0.016;*
+        particle.life -= 0.016;
+
         if (particle.life > 0) {
-*         nextParticles.push(partic*e);
+          nextParticles.push(particle);
 
           effectCtx.save();
- *        effectCtx.globalAlpha = Ma*h.max(particle.life, 0);
-         *effectCtx.fillStyle = particle.col*r;
-          effectCtx.translate(p*rticle.x, particle.y);
-          e*fectCtx.rotate(particle.rotation);*
-          const size = particle.s*ze * particle.life;
+          effectCtx.globalAlpha = Math.max(particle.life, 0);
+          effectCtx.fillStyle = particle.color;
+          effectCtx.translate(particle.x, particle.y);
+          effectCtx.rotate(particle.rotation);
 
-          if *particle.shape === "circle") {
-   *        effectCtx.beginPath();
-   *        effectCtx.arc(0, 0, size, *, Math.PI * 2);
-            effect*tx.fill();
+          const size = particle.size * particle.life;
+
+          if (particle.shape === "circle") {
+            effectCtx.beginPath();
+            effectCtx.arc(0, 0, size, 0, Math.PI * 2);
+            effectCtx.fill();
           }
 
-          *f (particle.shape === "square") {
-*           effectCtx.fillRect(-siz* / 2, -size / 2, size, size);
-    *     }
+          if (particle.shape === "square") {
+            effectCtx.fillRect(-size / 2, -size / 2, size, size);
+          }
 
-          if (particle.sha*e === "petal") {
-            effec*Ctx.beginPath();
-            effec*Ctx.ellipse(
+          if (particle.shape === "petal") {
+            effectCtx.beginPath();
+            effectCtx.ellipse(
               0,
-    *         0,
-              size * 0*65,
+              0,
+              size * 0.65,
               size * 1.25,
               0,
               0,
