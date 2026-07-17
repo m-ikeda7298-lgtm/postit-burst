@@ -156,7 +156,7 @@
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(8px);
-      min-width: 210px;
+      min-width: 230px;
       font-size: 14px;
     }
 
@@ -219,10 +219,13 @@
     const colorPreview = document.getElementById("colorPreview");
 
     let cameraStarted = false;
+    let loopStarted = false;
     let particles = [];
+
     let lastColorName = "不明";
     let lastBurstTime = 0;
-    let loopStarted = false;
+
+    const BURST_INTERVAL_MS = 3000;
 
     function resizeEffectCanvas() {
       effectCanvas.width = window.innerWidth * window.devicePixelRatio;
@@ -341,27 +344,38 @@
       const result = classifyColor(r, g, b);
 
       colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
-      status.textContent = `${result.name} / RGB(${r}, ${g}, ${b})`;
-      status.style.background = result.displayColor;
 
       maybeBurst(result);
+
+      status.style.background = result.displayColor;
+      status.textContent = `${result.name} / RGB(${r}, ${g}, ${b})`;
     }
 
     function maybeBurst(result) {
       const now = Date.now();
 
       const isKnownColor = result.name !== "不明";
-      const colorChanged = result.name !== lastColorName;
-      const threeSecondsPassed = now - lastBurstTime > 3000;
 
       if (!isKnownColor) {
+        lastColorName = "不明";
+        return;
+      }
+
+      const colorChanged = result.name !== lastColorName;
+      const intervalPassed = now - lastBurstTime >= BURST_INTERVAL_MS;
+
+      if (colorChanged) {
+        createBurst(result.particleColor, result.motionType);
+        lastBurstTime = now;
         lastColorName = result.name;
         return;
       }
 
-      if (colorChanged || threeSecondsPassed) {
+      if (intervalPassed) {
         createBurst(result.particleColor, result.motionType);
         lastBurstTime = now;
+        lastColorName = result.name;
+        return;
       }
 
       lastColorName = result.name;
@@ -620,43 +634,41 @@
 
       for (const particle of particles) {
         particle.vx *= particle.drag;
-        particle.vy *= particle.drag;
+        particle.*y *= particle.drag;
 
-        particle.x += particle.vx;
-        particle.y += particle.vy;
+        parti*le.x += particle.vx;
+        parti*le.y += particle.vy;
 
-        particle.vy += particle.gravity;
-        particle.rotation += particle.spin;
+        part*cle.vy += particle.gravity;
+      * particle.rotation += particle.spi*;
 
-        particle.life -= 0.016;
-
+        particle.life -= 0.016;*
         if (particle.life > 0) {
-          nextParticles.push(particle);
+*         nextParticles.push(partic*e);
 
           effectCtx.save();
-          effectCtx.globalAlpha = Math.max(particle.life, 0);
-          effectCtx.fillStyle = particle.color;
-          effectCtx.translate(particle.x, particle.y);
-          effectCtx.rotate(particle.rotation);
+ *        effectCtx.globalAlpha = Ma*h.max(particle.life, 0);
+         *effectCtx.fillStyle = particle.col*r;
+          effectCtx.translate(p*rticle.x, particle.y);
+          e*fectCtx.rotate(particle.rotation);*
+          const size = particle.s*ze * particle.life;
 
-          const size = particle.size * particle.life;
-
-          if (particle.shape === "circle") {
-            effectCtx.beginPath();
-            effectCtx.arc(0, 0, size, 0, Math.PI * 2);
-            effectCtx.fill();
+          if *particle.shape === "circle") {
+   *        effectCtx.beginPath();
+   *        effectCtx.arc(0, 0, size, *, Math.PI * 2);
+            effect*tx.fill();
           }
 
-          if (particle.shape === "square") {
-            effectCtx.fillRect(-size / 2, -size / 2, size, size);
-          }
+          *f (particle.shape === "square") {
+*           effectCtx.fillRect(-siz* / 2, -size / 2, size, size);
+    *     }
 
-          if (particle.shape === "petal") {
-            effectCtx.beginPath();
-            effectCtx.ellipse(
+          if (particle.sha*e === "petal") {
+            effec*Ctx.beginPath();
+            effec*Ctx.ellipse(
               0,
-              0,
-              size * 0.65,
+    *         0,
+              size * 0*65,
               size * 1.25,
               0,
               0,
