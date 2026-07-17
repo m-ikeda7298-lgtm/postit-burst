@@ -56,43 +56,43 @@
       pointer-events: none;
     }
 
-    .frame {
+    .frames {
       position: fixed;
+      left: 50%;
       top: 50%;
-      width: 125px;
-      height: 125px;
       transform: translate(-50%, -50%);
-      border: 3px solid white;
-      border-radius: 18px;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.08);
       z-index: 6;
+      display: flex;
+      gap: 8px;
       pointer-events: none;
     }
 
-    .frame.left {
-      left: 38%;
-    }
-
-    .frame.right {
-      left: 62%;
+    .frame {
+      position: relative;
+      width: clamp(68px, 20vw, 112px);
+      height: clamp(68px, 20vw, 112px);
+      border: 3px solid white;
+      border-radius: 16px;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.04);
+      pointer-events: none;
     }
 
     .frameLabel {
       position: absolute;
       left: 50%;
-      top: -34px;
+      top: -32px;
       transform: translateX(-50%);
-      padding: 5px 10px;
+      padding: 4px 9px;
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.55);
-      font-size: 13px;
+      font-size: 12px;
       white-space: nowrap;
     }
 
     .guide {
       position: fixed;
       left: 50%;
-      top: calc(50% + 95px);
+      top: calc(50% + 90px);
       transform: translateX(-50%);
       z-index: 7;
       padding: 8px 12px;
@@ -118,13 +118,13 @@
 
     .previewWrap {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
 
     .colorPreview {
-      width: 38px;
-      height: 38px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       border: 3px solid white;
       background: #333;
@@ -134,11 +134,12 @@
 
     .status {
       padding: 10px 14px;
-      border-radius: 999px;
+      border-radius: 18px;
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(8px);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.45;
+      word-break: keep-all;
     }
 
     .startOverlay {
@@ -203,6 +204,32 @@
     .hidden {
       display: none !important;
     }
+
+    @media (max-width: 480px) {
+      .frames {
+        gap: 5px;
+      }
+
+      .frame {
+        width: 70px;
+        height: 70px;
+        border-radius: 12px;
+      }
+
+      .frameLabel {
+        font-size: 11px;
+        top: -28px;
+      }
+
+      .guide {
+        top: calc(50% + 70px);
+        font-size: 12px;
+      }
+
+      .status {
+        font-size: 12px;
+      }
+    }
   </style>
 </head>
 
@@ -214,21 +241,20 @@
 
   <div class="title">Post-it Burst</div>
 
-  <div class="frame left">
-    <div class="frameLabel">左の付箋</div>
+  <div class="frames">
+    <div class="frame"><div class="frameLabel">1</div></div>
+    <div class="frame"><div class="frameLabel">2</div></div>
+    <div class="frame"><div class="frameLabel">3</div></div>
+    <div class="frame"><div class="frameLabel">4</div></div>
   </div>
 
-  <div class="frame right">
-    <div class="frameLabel">右の付箋</div>
-  </div>
-
-  <div class="guide">2つの白枠に付箋を入れてください</div>
+  <div class="guide">4つの白枠に付箋を並べてください</div>
 
   <div class="startOverlay" id="startOverlay">
     <div class="startPanel">
       <h1>Post-it Burst</h1>
       <p>
-        2つの付箋の色をカメラで読み取り、<br />
+        4つの付箋の色をカメラで読み取り、<br />
         それぞれの色が別々にはじけます。<br />
         ボタン、またはこの画面をタップしてください。
       </p>
@@ -238,8 +264,10 @@
 
   <div class="ui">
     <div class="previewWrap">
-      <div class="colorPreview" id="leftColorPreview"></div>
-      <div class="colorPreview" id="rightColorPreview"></div>
+      <div class="colorPreview" id="colorPreview1"></div>
+      <div class="colorPreview" id="colorPreview2"></div>
+      <div class="colorPreview" id="colorPreview3"></div>
+      <div class="colorPreview" id="colorPreview4"></div>
     </div>
     <div class="status" id="status">待機中</div>
   </div>
@@ -258,8 +286,11 @@
     const startButton = document.getElementById("startButton");
     const startOverlay = document.getElementById("startOverlay");
     const status = document.getElementById("status");
-    const leftColorPreview = document.getElementById("leftColorPreview");
-    const rightColorPreview = document.getElementById("rightColorPreview");
+
+    const colorPreview1 = document.getElementById("colorPreview1");
+    const colorPreview2 = document.getElementById("colorPreview2");
+    const colorPreview3 = document.getElementById("colorPreview3");
+    const colorPreview4 = document.getElementById("colorPreview4");
 
     let cameraStarted = false;
     let loopStarted = false;
@@ -269,22 +300,42 @@
 
     const zones = [
       {
-        id: "left",
-        label: "左",
-        screenXRatio: 0.38,
-        videoXRatio: 0.38,
+        id: "zone1",
+        label: "1",
+        screenXRatio: 0.32,
+        videoXRatio: 0.32,
         videoYRatio: 0.5,
-        preview: leftColorPreview,
+        preview: colorPreview1,
         lastColorName: "不明",
         lastBurstTime: 0
       },
       {
-        id: "right",
-        label: "右",
-        screenXRatio: 0.62,
-        videoXRatio: 0.62,
+        id: "zone2",
+        label: "2",
+        screenXRatio: 0.44,
+        videoXRatio: 0.44,
         videoYRatio: 0.5,
-        preview: rightColorPreview,
+        preview: colorPreview2,
+        lastColorName: "不明",
+        lastBurstTime: 0
+      },
+      {
+        id: "zone3",
+        label: "3",
+        screenXRatio: 0.56,
+        videoXRatio: 0.56,
+        videoYRatio: 0.5,
+        preview: colorPreview3,
+        lastColorName: "不明",
+        lastBurstTime: 0
+      },
+      {
+        id: "zone4",
+        label: "4",
+        screenXRatio: 0.68,
+        videoXRatio: 0.68,
+        videoYRatio: 0.5,
+        preview: colorPreview4,
         lastColorName: "不明",
         lastBurstTime: 0
       }
@@ -382,16 +433,16 @@
         zone.preview.style.background = `rgb(${detection.r}, ${detection.g}, ${detection.b})`;
 
         results.push(
-          `${zone.label}: ${detection.result.name} / RGB(${detection.r}, ${detection.g}, ${detection.b})`
+          `${zone.label}: ${detection.result.name}`
         );
       }
 
       status.textContent = results.join("　");
-      status.style.background = getStatusBackground();
+      status.style.background = "rgba(0, 0, 0, 0.55)";
     }
 
     function detectZoneColor(zone) {
-      const sampleSize = 105;
+      const sampleSize = getSampleSize();
 
       sampleCanvas.width = sampleSize;
       sampleCanvas.height = sampleSize;
@@ -441,6 +492,18 @@
       };
     }
 
+    function getSampleSize() {
+      if (window.innerWidth < 480) {
+        return 72;
+      }
+
+      if (window.innerWidth < 760) {
+        return 88;
+      }
+
+      return 100;
+    }
+
     function maybeBurst(zone, result) {
       const now = Date.now();
 
@@ -463,18 +526,6 @@
       zone.lastColorName = result.name;
     }
 
-    function getStatusBackground() {
-      const knownZones = zones.filter(function(zone) {
-        return zone.lastColorName !== "不明";
-      });
-
-      if (knownZones.length === 0) {
-        return "rgba(0, 0, 0, 0.55)";
-      }
-
-      return "rgba(0, 0, 0, 0.55)";
-    }
-
     function classifyColor(r, g, b) {
       const hsv = rgbToHsv(r, g, b);
       const h = hsv.h;
@@ -484,7 +535,6 @@
       if (v < 0.25 || s < 0.18) {
         return {
           name: "不明",
-          displayColor: "rgba(0, 0, 0, 0.55)",
           particleColor: "rgb(255, 255, 255)",
           motionType: "none"
         };
@@ -493,7 +543,6 @@
       if (h >= 35 && h <= 70) {
         return {
           name: "黄色",
-          displayColor: "rgba(255, 220, 40, 0.85)",
           particleColor: "rgb(255, 230, 50)",
           motionType: "sun"
         };
@@ -502,7 +551,6 @@
       if (h >= 15 && h < 35) {
         return {
           name: "オレンジ",
-          displayColor: "rgba(255, 140, 40, 0.85)",
           particleColor: "rgb(255, 145, 45)",
           motionType: "firework"
         };
@@ -511,7 +559,6 @@
       if (h >= 330 || h < 15) {
         return {
           name: "ピンク / 赤",
-          displayColor: "rgba(255, 80, 150, 0.85)",
           particleColor: "rgb(255, 85, 160)",
           motionType: "flower"
         };
@@ -520,7 +567,6 @@
       if (h >= 80 && h <= 160) {
         return {
           name: "緑",
-          displayColor: "rgba(80, 220, 110, 0.85)",
           particleColor: "rgb(80, 230, 120)",
           motionType: "leaf"
         };
@@ -529,7 +575,6 @@
       if (h >= 180 && h <= 250) {
         return {
           name: "青",
-          displayColor: "rgba(60, 170, 255, 0.85)",
           particleColor: "rgb(70, 180, 255)",
           motionType: "splash"
         };
@@ -538,7 +583,6 @@
       if (h > 250 && h < 330) {
         return {
           name: "紫",
-          displayColor: "rgba(180, 100, 255, 0.85)",
           particleColor: "rgb(190, 110, 255)",
           motionType: "spiral"
         };
@@ -546,7 +590,6 @@
 
       return {
         name: "不明",
-        displayColor: "rgba(0, 0, 0, 0.55)",
         particleColor: "rgb(255, 255, 255)",
         motionType: "none"
       };
