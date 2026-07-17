@@ -352,9 +352,14 @@
 
       const isKnownColor = result.name !== "不明";
       const colorChanged = result.name !== lastColorName;
-      const enoughTimePassed = now - lastBurstTime > 900;
+      const threeSecondsPassed = now - lastBurstTime > 3000;
 
-      if (isKnownColor && colorChanged && enoughTimePassed) {
+      if (!isKnownColor) {
+        lastColorName = result.name;
+        return;
+      }
+
+      if (colorChanged || threeSecondsPassed) {
         createBurst(result.particleColor, result.motionType);
         lastBurstTime = now;
       }
