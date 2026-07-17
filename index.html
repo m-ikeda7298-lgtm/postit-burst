@@ -15,6 +15,7 @@
       background: #111;
       color: #fff;
       font-family: sans-serif;
+      touch-action: manipulation;
     }
 
     video {
@@ -24,6 +25,8 @@
       height: 100%;
       object-fit: cover;
       background: #000;
+      z-index: 1;
+      pointer-events: none;
     }
 
     #effectCanvas {
@@ -39,6 +42,20 @@
       display: none;
     }
 
+    .title {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      z-index: 30;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      font-weight: bold;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
     .frame {
       position: fixed;
       left: 50%;
@@ -49,7 +66,7 @@
       border: 3px solid white;
       border-radius: 18px;
       box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.18);
-      z-index: 5;
+      z-index: 6;
       pointer-events: none;
     }
 
@@ -58,12 +75,13 @@
       left: 50%;
       top: calc(50% + 95px);
       transform: translateX(-50%);
-      z-index: 6;
+      z-index: 7;
       padding: 8px 12px;
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.5);
       font-size: 14px;
       white-space: nowrap;
+      pointer-events: none;
     }
 
     .ui {
@@ -74,18 +92,63 @@
       display: flex;
       gap: 12px;
       align-items: center;
-      z-index: 10;
+      z-index: 50;
+      pointer-events: auto;
+    }
+
+    .startOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.52);
+      backdrop-filter: blur(8px);
+      pointer-events: auto;
+    }
+
+    .startPanel {
+      width: min(88vw, 420px);
+      padding: 28px 22px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .startPanel h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+
+    .startPanel p {
+      margin: 0 0 22px;
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1.6;
+      font-size: 15px;
     }
 
     button {
       border: none;
       border-radius: 999px;
-      padding: 12px 18px;
-      font-size: 16px;
+      padding: 14px 22px;
+      font-size: 17px;
       font-weight: bold;
       background: white;
       color: #111;
       cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    #startButton {
+      min-width: 170px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
 
     .status {
@@ -94,6 +157,7 @@
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(8px);
       min-width: 210px;
+      font-size: 14px;
     }
 
     .colorPreview {
@@ -106,17 +170,8 @@
       flex: 0 0 auto;
     }
 
-    .title {
-      position: fixed;
-      left: 16px;
-      top: 16px;
-      z-index: 10;
-      padding: 10px 14px;
-      border-radius: 18px;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(8px);
-      font-weight: bold;
-      letter-spacing: 0.04em;
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -131,8 +186,18 @@
   <div class="frame"></div>
   <div class="guide">白枠の中にポストイットを入れてください</div>
 
+  <div class="startOverlay" id="startOverlay">
+    <div class="startPanel">
+      <h1>Post-it Burst</h1>
+      <p>
+        ポストイットの色をカメラで読み取り、<br />
+        色ごとに違う動きではじけます。
+      </p>
+      <button id="startButton">カメラ開始</button>
+    </div>
+  </div>
+
   <div class="ui">
-    <button id="startButton">カメラ開始</button>
     <div class="colorPreview" id="colorPreview"></div>
     <div class="status" id="status">待機中</div>
   </div>
@@ -149,14 +214,15 @@
     const effectCtx = effectCanvas.getContext("2d");
 
     const startButton = document.getElementById("startButton");
+    const startOverlay = document.getElementById("startOverlay");
     const status = document.getElementById("status");
     const colorPreview = document.getElementById("colorPreview");
 
     let cameraStarted = false;
     let particles = [];
-
     let lastColorName = "不明";
     let lastBurstTime = 0;
+    let loopStarted = false;
 
     function resizeEffectCanvas() {
       effectCanvas.width = window.innerWidth * window.devicePixelRatio;
@@ -175,13 +241,21 @@
     window.addEventListener("resize", resizeEffectCanvas);
     resizeEffectCanvas();
 
-    startButton.addEventListener("click", async () => {
+    async function startCamera() {
+      if (cameraStarted) {
+        return;
+      }
+
       try {
         status.textContent = "カメラ起動中...";
+        startButton.disabled = true;
+        startButton.textContent = "起動中...";
 
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: "environment"
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           },
           audio: false
         });
@@ -190,13 +264,25 @@
         cameraStarted = true;
 
         status.textContent = "色認識中";
-        startButton.style.display = "none";
+        startOverlay.classList.add("hidden");
 
-        requestAnimationFrame(loop);
+        if (!loopStarted) {
+          loopStarted = true;
+          requestAnimationFrame(loop);
+        }
       } catch (error) {
         console.error(error);
         status.textContent = "カメラを起動できませんでした";
+        startButton.disabled = false;
+        startButton.textContent = "もう一度試す";
       }
+    }
+
+    startButton.addEventListener("click", startCamera);
+
+    startButton.addEventListener("touchend", function(event) {
+      event.preventDefault();
+      startCamera();
     });
 
     function loop() {
@@ -562,13 +648,29 @@
 
           if (particle.shape === "petal") {
             effectCtx.beginPath();
-            effectCtx.ellipse(0, 0, size * 0.65, size * 1.25, 0, 0, Math.PI * 2);
+            effectCtx.ellipse(
+              0,
+              0,
+              size * 0.65,
+              size * 1.25,
+              0,
+              0,
+              Math.PI * 2
+            );
             effectCtx.fill();
           }
 
           if (particle.shape === "leaf") {
             effectCtx.beginPath();
-            effectCtx.ellipse(0, 0, size * 0.55, size * 1.45, 0, 0, Math.PI * 2);
+            effectCtx.ellipse(
+              0,
+              0,
+              size * 0.55,
+              size * 1.45,
+              0,
+              0,
+              Math.PI * 2
+            );
             effectCtx.fill();
 
             effectCtx.globalAlpha = Math.max(particle.life * 0.45, 0);
@@ -582,7 +684,15 @@
 
           if (particle.shape === "drop") {
             effectCtx.beginPath();
-            effectCtx.ellipse(0, 0, size * 0.65, size * 1.2, 0, 0, Math.PI * 2);
+            effectCtx.ellipse(
+              0,
+              0,
+              size * 0.65,
+              size * 1.2,
+              0,
+              0,
+              Math.PI * 2
+            );
             effectCtx.fill();
           }
 
