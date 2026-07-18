@@ -44,15 +44,15 @@
 
     .title {
       position: fixed;
-      left: 12px;
-      top: 12px;
+      left: 10px;
+      top: 10px;
       z-index: 30;
-      padding: 8px 11px;
-      border-radius: 14px;
+      padding: 6px 9px;
+      border-radius: 12px;
       background: rgba(0, 0, 0, 0.45);
       backdrop-filter: blur(8px);
       font-weight: bold;
-      font-size: 13px;
+      font-size: 11px;
       letter-spacing: 0.04em;
       pointer-events: none;
     }
@@ -61,90 +61,89 @@
       position: fixed;
       left: 50%;
       top: 50%;
+      width: min(96vw, 960px);
       transform: translate(-50%, -50%);
       z-index: 6;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(4, 1fr);
+      grid-template-columns: repeat(16, 1fr);
+      grid-template-rows: repeat(5, 1fr);
       gap: 0;
       pointer-events: none;
     }
 
     .frame {
       position: relative;
-      width: clamp(42px, 15vw, 78px);
-      height: clamp(42px, 15vw, 78px);
-      border: 2px solid rgba(255, 255, 255, 0.95);
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(255, 255, 255, 0.88);
       box-sizing: border-box;
       pointer-events: none;
     }
 
     .frameLabel {
       position: absolute;
-      left: 4px;
-      top: 3px;
-      padding: 1px 4px;
+      left: 2px;
+      top: 2px;
+      padding: 0 2px;
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.45);
-      font-size: 9px;
-      line-height: 1.2;
+      background: rgba(0, 0, 0, 0.38);
+      font-size: 6px;
+      line-height: 1.1;
       white-space: nowrap;
     }
 
     .guide {
       position: fixed;
       left: 50%;
-      top: calc(50% + 175px);
+      top: calc(50% + 95px);
       transform: translateX(-50%);
       z-index: 7;
-      padding: 6px 10px;
+      padding: 4px 8px;
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.5);
-      font-size: 11px;
+      background: rgba(0, 0, 0, 0.48);
+      font-size: 9px;
       white-space: nowrap;
       pointer-events: none;
     }
 
     .ui {
       position: fixed;
-      left: 8px;
-      right: 8px;
-      bottom: 8px;
+      left: 6px;
+      right: 6px;
+      bottom: 6px;
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 6px 8px;
-      align-items: center;
+      gap: 4px 6px;
+      align-items: end;
       z-index: 50;
       pointer-events: none;
     }
 
     .previewWrap {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2px;
-      align-items: center;
+      grid-template-columns: repeat(16, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 1px;
+      width: 92px;
     }
 
     .colorPreview {
-      width: 15px;
-      height: 15px;
+      width: 4px;
+      height: 4px;
       border-radius: 50%;
-      border: 1.5px solid white;
       background: #333;
-      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
-      flex: 0 0 auto;
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
     }
 
     .status {
-      padding: 5px 7px;
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.55);
+      padding: 3px 5px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.52);
       backdrop-filter: blur(8px);
-      font-size: 9px;
-      line-height: 1.35;
-      max-height: 44px;
+      font-size: 6px;
+      line-height: 1.15;
+      max-height: 30px;
       overflow: hidden;
-      word-break: keep-all;
+      letter-spacing: 0.02em;
     }
 
     .startOverlay {
@@ -211,24 +210,27 @@
     }
 
     @media (max-width: 480px) {
-      .frame {
-        width: 58px;
-        height: 58px;
+      .frames {
+        width: 98vw;
       }
 
       .guide {
-        top: calc(50% + 128px);
-        font-size: 10px;
+        top: calc(50% + 72px);
+        font-size: 8px;
       }
 
       .status {
-        font-size: 8px;
-        max-height: 38px;
+        font-size: 5px;
+        max-height: 24px;
+      }
+
+      .previewWrap {
+        width: 78px;
       }
 
       .colorPreview {
-        width: 13px;
-        height: 13px;
+        width: 3px;
+        height: 3px;
       }
     }
   </style>
@@ -242,35 +244,15 @@
 
   <div class="title">Post-it Burst</div>
 
-  <div class="frames">
-    <div class="frame" id="frame1"><div class="frameLabel">1</div></div>
-    <div class="frame" id="frame2"><div class="frameLabel">2</div></div>
-    <div class="frame" id="frame3"><div class="frameLabel">3</div></div>
-    <div class="frame" id="frame4"><div class="frameLabel">4</div></div>
+  <div class="frames" id="frames"></div>
 
-    <div class="frame" id="frame5"><div class="frameLabel">5</div></div>
-    <div class="frame" id="frame6"><div class="frameLabel">6</div></div>
-    <div class="frame" id="frame7"><div class="frameLabel">7</div></div>
-    <div class="frame" id="frame8"><div class="frameLabel">8</div></div>
-
-    <div class="frame" id="frame9"><div class="frameLabel">9</div></div>
-    <div class="frame" id="frame10"><div class="frameLabel">10</div></div>
-    <div class="frame" id="frame11"><div class="frameLabel">11</div></div>
-    <div class="frame" id="frame12"><div class="frameLabel">12</div></div>
-
-    <div class="frame" id="frame13"><div class="frameLabel">13</div></div>
-    <div class="frame" id="frame14"><div class="frameLabel">14</div></div>
-    <div class="frame" id="frame15"><div class="frameLabel">15</div></div>
-    <div class="frame" id="frame16"><div class="frameLabel">16</div></div>
-  </div>
-
-  <div class="guide">4×4の白枠に付箋を並べてください</div>
+  <div class="guide">5×16、80個の認識範囲です</div>
 
   <div class="startOverlay" id="startOverlay">
     <div class="startPanel">
       <h1>Post-it Burst</h1>
       <p>
-        16個の認識範囲で付箋の色を読み取り、<br />
+        80個の認識範囲で付箋の色を読み取り、<br />
         それぞれの白枠の中央から色がはじけます。<br />
         ボタン、またはこの画面をタップしてください。
       </p>
@@ -279,24 +261,7 @@
   </div>
 
   <div class="ui">
-    <div class="previewWrap">
-      <div class="colorPreview" id="colorPreview1"></div>
-      <div class="colorPreview" id="colorPreview2"></div>
-      <div class="colorPreview" id="colorPreview3"></div>
-      <div class="colorPreview" id="colorPreview4"></div>
-      <div class="colorPreview" id="colorPreview5"></div>
-      <div class="colorPreview" id="colorPreview6"></div>
-      <div class="colorPreview" id="colorPreview7"></div>
-      <div class="colorPreview" id="colorPreview8"></div>
-      <div class="colorPreview" id="colorPreview9"></div>
-      <div class="colorPreview" id="colorPreview10"></div>
-      <div class="colorPreview" id="colorPreview11"></div>
-      <div class="colorPreview" id="colorPreview12"></div>
-      <div class="colorPreview" id="colorPreview13"></div>
-      <div class="colorPreview" id="colorPreview14"></div>
-      <div class="colorPreview" id="colorPreview15"></div>
-      <div class="colorPreview" id="colorPreview16"></div>
-    </div>
+    <div class="previewWrap" id="previewWrap"></div>
     <div class="status" id="status">待機中</div>
   </div>
 
@@ -314,24 +279,49 @@
     const startButton = document.getElementById("startButton");
     const startOverlay = document.getElementById("startOverlay");
     const status = document.getElementById("status");
+    const framesElement = document.getElementById("frames");
+    const previewWrap = document.getElementById("previewWrap");
 
-    const zones = [];
+    const ROWS = 5;
+    const COLS = 16;
+    const ZONE_COUNT = ROWS * COLS;
 
-    for (let i = 1; i <= 16; i++) {
-      zones.push({
-        label: String(i),
-        frame: document.getElementById(`frame${i}`),
-        preview: document.getElementById(`colorPreview${i}`),
-        lastColorName: "不明",
-        lastBurstTime: 0
-      });
-    }
+    const BURST_INTERVAL_MS = 3000;
+    const DETECTION_INTERVAL_MS = 160;
 
     let cameraStarted = false;
     let loopStarted = false;
     let particles = [];
+    let lastDetectionTime = 0;
 
-    const BURST_INTERVAL_MS = 3000;
+    const zones = [];
+
+    for (let i = 1; i <= ZONE_COUNT; i++) {
+      const frame = document.createElement("div");
+      frame.className = "frame";
+      frame.id = `frame${i}`;
+
+      const label = document.createElement("div");
+      label.className = "frameLabel";
+      label.textContent = String(i);
+
+      frame.appendChild(label);
+      framesElement.appendChild(frame);
+
+      const preview = document.createElement("div");
+      preview.className = "colorPreview";
+      preview.id = `colorPreview${i}`;
+      previewWrap.appendChild(preview);
+
+      zones.push({
+        label: String(i),
+        frame,
+        preview,
+        lastColorName: "不明",
+        lastBurstTime: 0,
+        latestShortName: "不"
+      });
+    }
 
     function resizeEffectCanvas() {
       effectCanvas.width = window.innerWidth * window.devicePixelRatio;
@@ -402,9 +392,10 @@
       startCamera();
     });
 
-    function loop() {
-      if (cameraStarted) {
+    function loop(timestamp) {
+      if (cameraStarted && timestamp - lastDetectionTime >= DETECTION_INTERVAL_MS) {
         detectAllZones();
+        lastDetectionTime = timestamp;
       }
 
       updateParticles();
@@ -416,20 +407,36 @@
         return;
       }
 
-      const results = [];
-
       for (const zone of zones) {
         const detection = detectZoneColor(zone);
 
         maybeBurst(zone, detection.result, detection.screenCenter);
 
         zone.preview.style.background = `rgb(${detection.r}, ${detection.g}, ${detection.b})`;
-
-        results.push(`${zone.label}:${shortColorName(detection.result.name)}`);
+        zone.latestShortName = shortColorName(detection.result.name);
       }
 
-      status.textContent = results.join(" ");
-      status.style.background = "rgba(0, 0, 0, 0.55)";
+      renderStatus();
+    }
+
+    function renderStatus() {
+      const rows = [];
+
+      for (let row = 0; row < ROWS; row++) {
+        const start = row * COLS;
+        const end = start + COLS;
+        const rowText = zones
+          .slice(start, end)
+          .map(function(zone) {
+            return zone.latestShortName;
+          })
+          .join("");
+
+        rows.push(rowText);
+      }
+
+      status.innerHTML = rows.join("<br>");
+      status.style.background = "rgba(0, 0, 0, 0.52)";
     }
 
     function shortColorName(name) {
@@ -457,7 +464,7 @@
         return "紫";
       }
 
-      return "不";
+      return "・";
     }
 
     function getFrameScreenCenter(frameElement) {
@@ -518,9 +525,9 @@
       const screenCenter = getFrameScreenCenter(zone.frame);
       const videoPoint = screenPointToVideoPoint(screenCenter.x, screenCenter.y);
 
-      const screenSampleSize = Math.min(screenCenter.width, screenCenter.height) * 0.7;
+      const screenSampleSize = Math.min(screenCenter.width, screenCenter.height) * 0.62;
       const videoSampleSize = Math.max(
-        20,
+        8,
         Math.round(screenSampleSize / videoPoint.scale)
       );
 
@@ -543,390 +550,4 @@
       );
 
       const imageData = sampleCtx.getImageData(0, 0, videoSampleSize, videoSampleSize);
-      const data = imageData.data;
-
-      let r = 0;
-      let g = 0;
-      let b = 0;
-      let count = 0;
-
-      for (let i = 0; i < data.length; i += 16) {
-        r += data[i];
-        g += data[i + 1];
-        b += data[i + 2];
-        count++;
-      }
-
-      r = Math.round(r / count);
-      g = Math.round(g / count);
-      b = Math.round(b / count);
-
-      return {
-        r,
-        g,
-        b,
-        screenCenter,
-        result: classifyColor(r, g, b)
-      };
-    }
-
-    function maybeBurst(zone, result, screenCenter) {
-      const now = Date.now();
-
-      if (result.name === "不明") {
-        zone.lastColorName = "不明";
-        return;
-      }
-
-      const colorChanged = result.name !== zone.lastColorName;
-      const intervalPassed = now - zone.lastBurstTime >= BURST_INTERVAL_MS;
-
-      if (colorChanged || intervalPassed) {
-        createBurst(
-          result.particleColor,
-          result.motionType,
-          screenCenter.x,
-          screenCenter.y
-        );
-
-        zone.lastBurstTime = now;
-      }
-
-      zone.lastColorName = result.name;
-    }
-
-    function classifyColor(r, g, b) {
-      const hsv = rgbToHsv(r, g, b);
-      const h = hsv.h;
-      const s = hsv.s;
-      const v = hsv.v;
-
-      if (v < 0.25 || s < 0.18) {
-        return {
-          name: "不明",
-          particleColor: "rgb(255, 255, 255)",
-          motionType: "none"
-        };
-      }
-
-      if (h >= 35 && h <= 70) {
-        return {
-          name: "黄色",
-          particleColor: "rgb(255, 230, 50)",
-          motionType: "sun"
-        };
-      }
-
-      if (h >= 15 && h < 35) {
-        return {
-          name: "オレンジ",
-          particleColor: "rgb(255, 145, 45)",
-          motionType: "firework"
-        };
-      }
-
-      if (h >= 330 || h < 15) {
-        return {
-          name: "ピンク / 赤",
-          particleColor: "rgb(255, 85, 160)",
-          motionType: "flower"
-        };
-      }
-
-      if (h >= 80 && h <= 160) {
-        return {
-          name: "緑",
-          particleColor: "rgb(80, 230, 120)",
-          motionType: "leaf"
-        };
-      }
-
-      if (h >= 180 && h <= 250) {
-        return {
-          name: "青",
-          particleColor: "rgb(70, 180, 255)",
-          motionType: "splash"
-        };
-      }
-
-      if (h > 250 && h < 330) {
-        return {
-          name: "紫",
-          particleColor: "rgb(190, 110, 255)",
-          motionType: "spiral"
-        };
-      }
-
-      return {
-        name: "不明",
-        particleColor: "rgb(255, 255, 255)",
-        motionType: "none"
-      };
-    }
-
-    function rgbToHsv(r, g, b) {
-      r = r / 255;
-      g = g / 255;
-      b = b / 255;
-
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      const diff = max - min;
-
-      let h = 0;
-      const s = max === 0 ? 0 : diff / max;
-      const v = max;
-
-      if (diff !== 0) {
-        if (max === r) {
-          h = ((g - b) / diff) % 6;
-        } else if (max === g) {
-          h = (b - r) / diff + 2;
-        } else {
-          h = (r - g) / diff + 4;
-        }
-
-        h = h * 60;
-
-        if (h < 0) {
-          h += 360;
-        }
-      }
-
-      return { h, s, v };
-    }
-
-    function createBurst(color, motionType, originX, originY) {
-      const centerX = originX;
-      const centerY = originY;
-
-      if (motionType === "sun") {
-        for (let i = 0; i < 80; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 3 + Math.random() * 8;
-
-          particles.push({
-            x: centerX,
-            y: centerY,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            size: 2 + Math.random() * 7,
-            life: 1,
-            color: color,
-            shape: "circle",
-            gravity: 0.02,
-            drag: 0.985,
-            rotation: 0,
-            spin: 0
-          });
-        }
-      }
-
-      if (motionType === "firework") {
-        for (let i = 0; i < 95; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 4 + Math.random() * 11;
-
-          particles.push({
-            x: centerX,
-            y: centerY,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            size: 3 + Math.random() * 8,
-            life: 1,
-            color: color,
-            shape: "square",
-            gravity: 0.11,
-            drag: 0.975,
-            rotation: Math.random() * Math.PI,
-            spin: -0.15 + Math.random() * 0.3
-          });
-        }
-      }
-
-      if (motionType === "flower") {
-        for (let i = 0; i < 70; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 2 + Math.random() * 5;
-
-          particles.push({
-            x: centerX,
-            y: centerY,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 1.2,
-            size: 4 + Math.random() * 9,
-            life: 1,
-            color: color,
-            shape: "petal",
-            gravity: 0.035,
-            drag: 0.992,
-            rotation: Math.random() * Math.PI,
-            spin: -0.08 + Math.random() * 0.16
-          });
-        }
-      }
-
-      if (motionType === "leaf") {
-        for (let i = 0; i < 65; i++) {
-          const angle = -Math.PI / 2 + (-0.9 + Math.random() * 1.8);
-          const speed = 1.4 + Math.random() * 4.5;
-
-          particles.push({
-            x: centerX,
-            y: centerY,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            size: 5 + Math.random() * 9,
-            life: 1,
-            color: color,
-            shape: "leaf",
-            gravity: -0.005,
-            drag: 0.99,
-            rotation: Math.random() * Math.PI,
-            spin: -0.06 + Math.random() * 0.12
-          });
-        }
-      }
-
-      if (motionType === "splash") {
-        for (let i = 0; i < 75; i++) {
-          const angle = -Math.PI / 2 + (-0.9 + Math.random() * 1.8);
-          const speed = 3 + Math.random() * 9;
-
-          particles.push({
-            x: centerX,
-            y: centerY,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            size: 2 + Math.random() * 6,
-            life: 1,
-            color: color,
-            shape: "drop",
-            gravity: 0.16,
-            drag: 0.985,
-            rotation: Math.random() * Math.PI,
-            spin: 0.04
-          });
-        }
-      }
-
-      if (motionType === "spiral") {
-        for (let i = 0; i < 80; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 2 + Math.random() * 6;
-
-          particles.push({
-            x: centerX,
-            y: centerY,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            size: 3 + Math.random() * 8,
-            life: 1,
-            color: color,
-            shape: "circle",
-            gravity: 0.01,
-            drag: 0.99,
-            rotation: angle,
-            spin: 0.12
-          });
-        }
-      }
-    }
-
-    function updateParticles() {
-      effectCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-      const nextParticles = [];
-
-      for (const particle of particles) {
-        particle.vx *= particle.drag;
-        particle.vy *= particle.drag;
-
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-
-        particle.vy += particle.gravity;
-        particle.rotation += particle.spin;
-
-        particle.life -= 0.016;
-
-        if (particle.life > 0) {
-          nextParticles.push(particle);
-
-          effectCtx.save();
-          effectCtx.globalAlpha = Math.max(particle.life, 0);
-          effectCtx.fillStyle = particle.color;
-          effectCtx.translate(particle.x, particle.y);
-          effectCtx.rotate(particle.rotation);
-
-          const size = particle.size * particle.life;
-
-          if (particle.shape === "circle") {
-            effectCtx.beginPath();
-            effectCtx.arc(0, 0, size, 0, Math.PI * 2);
-            effectCtx.fill();
-          }
-
-          if (particle.shape === "square") {
-            effectCtx.fillRect(-size / 2, -size / 2, size, size);
-          }
-
-          if (particle.shape === "petal") {
-            effectCtx.beginPath();
-            effectCtx.ellipse(
-              0,
-              0,
-              size * 0.65,
-              size * 1.25,
-              0,
-              0,
-              Math.PI * 2
-            );
-            effectCtx.fill();
-          }
-
-          if (particle.shape === "leaf") {
-            effectCtx.beginPath();
-            effectCtx.ellipse(
-              0,
-              0,
-              size * 0.55,
-              size * 1.45,
-              0,
-              0,
-              Math.PI * 2
-            );
-            effectCtx.fill();
-
-            effectCtx.globalAlpha = Math.max(particle.life * 0.45, 0);
-            effectCtx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-            effectCtx.lineWidth = 1;
-            effectCtx.beginPath();
-            effectCtx.moveTo(0, -size * 1.1);
-            effectCtx.lineTo(0, size * 1.1);
-            effectCtx.stroke();
-          }
-
-          if (particle.shape === "drop") {
-            effectCtx.beginPath();
-            effectCtx.ellipse(
-              0,
-              0,
-              size * 0.65,
-              size * 1.2,
-              0,
-              0,
-              Math.PI * 2
-            );
-            effectCtx.fill();
-          }
-
-          effectCtx.restore();
-        }
-      }
-
-      particles = nextParticles;
-    }
-  </script>
-</body>
-</html>
+      const data
