@@ -44,14 +44,15 @@
 
     .title {
       position: fixed;
-      left: 16px;
-      top: 16px;
+      left: 12px;
+      top: 12px;
       z-index: 30;
-      padding: 10px 14px;
-      border-radius: 18px;
+      padding: 8px 11px;
+      border-radius: 14px;
       background: rgba(0, 0, 0, 0.45);
       backdrop-filter: blur(8px);
       font-weight: bold;
+      font-size: 13px;
       letter-spacing: 0.04em;
       pointer-events: none;
     }
@@ -62,83 +63,87 @@
       top: 50%;
       transform: translate(-50%, -50%);
       z-index: 6;
-      display: flex;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 0;
       pointer-events: none;
     }
 
     .frame {
       position: relative;
-      width: clamp(68px, 20vw, 112px);
-      height: clamp(68px, 20vw, 112px);
-      border: 3px solid white;
-      border-radius: 16px;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.04);
+      width: clamp(42px, 15vw, 78px);
+      height: clamp(42px, 15vw, 78px);
+      border: 2px solid rgba(255, 255, 255, 0.95);
+      box-sizing: border-box;
       pointer-events: none;
     }
 
     .frameLabel {
       position: absolute;
-      left: 50%;
-      top: -32px;
-      transform: translateX(-50%);
-      padding: 4px 9px;
+      left: 4px;
+      top: 3px;
+      padding: 1px 4px;
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.55);
-      font-size: 12px;
+      background: rgba(0, 0, 0, 0.45);
+      font-size: 9px;
+      line-height: 1.2;
       white-space: nowrap;
     }
 
     .guide {
       position: fixed;
       left: 50%;
-      top: calc(50% + 90px);
+      top: calc(50% + 175px);
       transform: translateX(-50%);
       z-index: 7;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.5);
-      font-size: 14px;
+      font-size: 11px;
       white-space: nowrap;
       pointer-events: none;
     }
 
     .ui {
       position: fixed;
-      left: 16px;
-      right: 16px;
-      bottom: 16px;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 10px 12px;
+      gap: 6px 8px;
       align-items: center;
       z-index: 50;
       pointer-events: none;
     }
 
     .previewWrap {
-      display: flex;
-      gap: 6px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
       align-items: center;
     }
 
     .colorPreview {
-      width: 32px;
-      height: 32px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
-      border: 3px solid white;
+      border: 1.5px solid white;
       background: #333;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
       flex: 0 0 auto;
     }
 
     .status {
-      padding: 10px 14px;
-      border-radius: 18px;
+      padding: 5px 7px;
+      border-radius: 10px;
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(8px);
-      font-size: 13px;
-      line-height: 1.45;
+      font-size: 9px;
+      line-height: 1.35;
+      max-height: 44px;
+      overflow: hidden;
       word-break: keep-all;
     }
 
@@ -206,28 +211,24 @@
     }
 
     @media (max-width: 480px) {
-      .frames {
-        gap: 5px;
-      }
-
       .frame {
-        width: 70px;
-        height: 70px;
-        border-radius: 12px;
-      }
-
-      .frameLabel {
-        font-size: 11px;
-        top: -28px;
+        width: 58px;
+        height: 58px;
       }
 
       .guide {
-        top: calc(50% + 70px);
-        font-size: 12px;
+        top: calc(50% + 128px);
+        font-size: 10px;
       }
 
       .status {
-        font-size: 12px;
+        font-size: 8px;
+        max-height: 38px;
+      }
+
+      .colorPreview {
+        width: 13px;
+        height: 13px;
       }
     }
   </style>
@@ -246,15 +247,30 @@
     <div class="frame" id="frame2"><div class="frameLabel">2</div></div>
     <div class="frame" id="frame3"><div class="frameLabel">3</div></div>
     <div class="frame" id="frame4"><div class="frameLabel">4</div></div>
+
+    <div class="frame" id="frame5"><div class="frameLabel">5</div></div>
+    <div class="frame" id="frame6"><div class="frameLabel">6</div></div>
+    <div class="frame" id="frame7"><div class="frameLabel">7</div></div>
+    <div class="frame" id="frame8"><div class="frameLabel">8</div></div>
+
+    <div class="frame" id="frame9"><div class="frameLabel">9</div></div>
+    <div class="frame" id="frame10"><div class="frameLabel">10</div></div>
+    <div class="frame" id="frame11"><div class="frameLabel">11</div></div>
+    <div class="frame" id="frame12"><div class="frameLabel">12</div></div>
+
+    <div class="frame" id="frame13"><div class="frameLabel">13</div></div>
+    <div class="frame" id="frame14"><div class="frameLabel">14</div></div>
+    <div class="frame" id="frame15"><div class="frameLabel">15</div></div>
+    <div class="frame" id="frame16"><div class="frameLabel">16</div></div>
   </div>
 
-  <div class="guide">4つの白枠に付箋を並べてください</div>
+  <div class="guide">4×4の白枠に付箋を並べてください</div>
 
   <div class="startOverlay" id="startOverlay">
     <div class="startPanel">
       <h1>Post-it Burst</h1>
       <p>
-        4つの付箋の色をカメラで読み取り、<br />
+        16個の認識範囲で付箋の色を読み取り、<br />
         それぞれの白枠の中央から色がはじけます。<br />
         ボタン、またはこの画面をタップしてください。
       </p>
@@ -268,6 +284,18 @@
       <div class="colorPreview" id="colorPreview2"></div>
       <div class="colorPreview" id="colorPreview3"></div>
       <div class="colorPreview" id="colorPreview4"></div>
+      <div class="colorPreview" id="colorPreview5"></div>
+      <div class="colorPreview" id="colorPreview6"></div>
+      <div class="colorPreview" id="colorPreview7"></div>
+      <div class="colorPreview" id="colorPreview8"></div>
+      <div class="colorPreview" id="colorPreview9"></div>
+      <div class="colorPreview" id="colorPreview10"></div>
+      <div class="colorPreview" id="colorPreview11"></div>
+      <div class="colorPreview" id="colorPreview12"></div>
+      <div class="colorPreview" id="colorPreview13"></div>
+      <div class="colorPreview" id="colorPreview14"></div>
+      <div class="colorPreview" id="colorPreview15"></div>
+      <div class="colorPreview" id="colorPreview16"></div>
     </div>
     <div class="status" id="status">待機中</div>
   </div>
@@ -287,36 +315,17 @@
     const startOverlay = document.getElementById("startOverlay");
     const status = document.getElementById("status");
 
-    const zones = [
-      {
-        label: "1",
-        frame: document.getElementById("frame1"),
-        preview: document.getElementById("colorPreview1"),
+    const zones = [];
+
+    for (let i = 1; i <= 16; i++) {
+      zones.push({
+        label: String(i),
+        frame: document.getElementById(`frame${i}`),
+        preview: document.getElementById(`colorPreview${i}`),
         lastColorName: "不明",
         lastBurstTime: 0
-      },
-      {
-        label: "2",
-        frame: document.getElementById("frame2"),
-        preview: document.getElementById("colorPreview2"),
-        lastColorName: "不明",
-        lastBurstTime: 0
-      },
-      {
-        label: "3",
-        frame: document.getElementById("frame3"),
-        preview: document.getElementById("colorPreview3"),
-        lastColorName: "不明",
-        lastBurstTime: 0
-      },
-      {
-        label: "4",
-        frame: document.getElementById("frame4"),
-        preview: document.getElementById("colorPreview4"),
-        lastColorName: "不明",
-        lastBurstTime: 0
-      }
-    ];
+      });
+    }
 
     let cameraStarted = false;
     let loopStarted = false;
@@ -411,15 +420,44 @@
 
       for (const zone of zones) {
         const detection = detectZoneColor(zone);
+
         maybeBurst(zone, detection.result, detection.screenCenter);
 
         zone.preview.style.background = `rgb(${detection.r}, ${detection.g}, ${detection.b})`;
 
-        results.push(`${zone.label}: ${detection.result.name}`);
+        results.push(`${zone.label}:${shortColorName(detection.result.name)}`);
       }
 
-      status.textContent = results.join("　");
+      status.textContent = results.join(" ");
       status.style.background = "rgba(0, 0, 0, 0.55)";
+    }
+
+    function shortColorName(name) {
+      if (name === "ピンク / 赤") {
+        return "桃";
+      }
+
+      if (name === "オレンジ") {
+        return "橙";
+      }
+
+      if (name === "黄色") {
+        return "黄";
+      }
+
+      if (name === "緑") {
+        return "緑";
+      }
+
+      if (name === "青") {
+        return "青";
+      }
+
+      if (name === "紫") {
+        return "紫";
+      }
+
+      return "不";
     }
 
     function getFrameScreenCenter(frameElement) {
@@ -480,9 +518,9 @@
       const screenCenter = getFrameScreenCenter(zone.frame);
       const videoPoint = screenPointToVideoPoint(screenCenter.x, screenCenter.y);
 
-      const screenSampleSize = Math.min(screenCenter.width, screenCenter.height) * 0.72;
+      const screenSampleSize = Math.min(screenCenter.width, screenCenter.height) * 0.7;
       const videoSampleSize = Math.max(
-        32,
+        20,
         Math.round(screenSampleSize / videoPoint.scale)
       );
 
@@ -663,16 +701,16 @@
       const centerY = originY;
 
       if (motionType === "sun") {
-        for (let i = 0; i < 120; i++) {
+        for (let i = 0; i < 80; i++) {
           const angle = Math.random() * Math.PI * 2;
-          const speed = 4 + Math.random() * 9;
+          const speed = 3 + Math.random() * 8;
 
           particles.push({
             x: centerX,
             y: centerY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            size: 3 + Math.random() * 8,
+            size: 2 + Math.random() * 7,
             life: 1,
             color: color,
             shape: "circle",
@@ -685,16 +723,16 @@
       }
 
       if (motionType === "firework") {
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < 95; i++) {
           const angle = Math.random() * Math.PI * 2;
-          const speed = 5 + Math.random() * 13;
+          const speed = 4 + Math.random() * 11;
 
           particles.push({
             x: centerX,
             y: centerY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            size: 4 + Math.random() * 10,
+            size: 3 + Math.random() * 8,
             life: 1,
             color: color,
             shape: "square",
@@ -707,16 +745,16 @@
       }
 
       if (motionType === "flower") {
-        for (let i = 0; i < 90; i++) {
+        for (let i = 0; i < 70; i++) {
           const angle = Math.random() * Math.PI * 2;
-          const speed = 2 + Math.random() * 6;
+          const speed = 2 + Math.random() * 5;
 
           particles.push({
             x: centerX,
             y: centerY,
             vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 1.5,
-            size: 6 + Math.random() * 12,
+            vy: Math.sin(angle) * speed - 1.2,
+            size: 4 + Math.random() * 9,
             life: 1,
             color: color,
             shape: "petal",
@@ -729,16 +767,16 @@
       }
 
       if (motionType === "leaf") {
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 65; i++) {
           const angle = -Math.PI / 2 + (-0.9 + Math.random() * 1.8);
-          const speed = 1.5 + Math.random() * 5;
+          const speed = 1.4 + Math.random() * 4.5;
 
           particles.push({
             x: centerX,
             y: centerY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            size: 7 + Math.random() * 12,
+            size: 5 + Math.random() * 9,
             life: 1,
             color: color,
             shape: "leaf",
@@ -751,16 +789,16 @@
       }
 
       if (motionType === "splash") {
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 75; i++) {
           const angle = -Math.PI / 2 + (-0.9 + Math.random() * 1.8);
-          const speed = 4 + Math.random() * 10;
+          const speed = 3 + Math.random() * 9;
 
           particles.push({
             x: centerX,
             y: centerY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            size: 3 + Math.random() * 7,
+            size: 2 + Math.random() * 6,
             life: 1,
             color: color,
             shape: "drop",
@@ -773,16 +811,16 @@
       }
 
       if (motionType === "spiral") {
-        for (let i = 0; i < 120; i++) {
+        for (let i = 0; i < 80; i++) {
           const angle = Math.random() * Math.PI * 2;
-          const speed = 2 + Math.random() * 7;
+          const speed = 2 + Math.random() * 6;
 
           particles.push({
             x: centerX,
             y: centerY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            size: 4 + Math.random() * 10,
+            size: 3 + Math.random() * 8,
             life: 1,
             color: color,
             shape: "circle",
